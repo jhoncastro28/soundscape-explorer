@@ -9,7 +9,7 @@ class Config:
     DATABASE_NAME = os.getenv('DATABASE_NAME', 'soundscape')
     
     # Flask Configuration
-    SECRET_KEY = os.getenv('SECRET_KEY', 'dev-secret-key')
+    SECRET_KEY = os.getenv('SECRET_KEY', 'dev-secret-key-local')
     DEBUG = os.getenv('FLASK_ENV') == 'development'
     
     # Upload Configuration
@@ -21,15 +21,31 @@ class Config:
     
     # Audio Configuration
     ALLOWED_AUDIO_EXTENSIONS = os.getenv('ALLOWED_AUDIO_EXTENSIONS', 'mp3,wav,ogg,m4a').split(',')
+    
+    @staticmethod
+    def validate_config():
+        """Validar configuración requerida"""
+        if not Config.MONGODB_URI:
+            raise ValueError("MONGODB_URI es requerida. Configura tu archivo .env")
+        
+        return True
 
 class DevelopmentConfig(Config):
     DEBUG = True
+    # Configuraciones específicas para desarrollo local
+    TESTING = False
 
 class ProductionConfig(Config):
     DEBUG = False
+    TESTING = False
+
+class TestingConfig(Config):
+    TESTING = True
+    DATABASE_NAME = 'soundscape_test'
 
 config = {
     'development': DevelopmentConfig,
     'production': ProductionConfig,
+    'testing': TestingConfig,
     'default': DevelopmentConfig
 }
