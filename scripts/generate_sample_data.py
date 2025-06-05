@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 Script para generar datos de prueba para SoundScape Explorer
 """
@@ -8,7 +7,7 @@ import sys
 import random
 from datetime import datetime, timedelta
 from pymongo import MongoClient
-from config import Config
+from backend_ssE.config import Config
 
 # Datos de muestra
 SAMPLE_SOUNDS = [
