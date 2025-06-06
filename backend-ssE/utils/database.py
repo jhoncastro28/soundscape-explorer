@@ -42,7 +42,7 @@ class Database:
     
     def get_collection(self, collection_name):
         """Obtener una colección de la base de datos"""
-        if not self.db:
+        if self.db is None:
             self.connect()
         return self.db[collection_name]
     

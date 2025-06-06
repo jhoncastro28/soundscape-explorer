@@ -5,6 +5,7 @@ import {
   Route,
   Link,
   useLocation,
+  Navigate,
 } from "react-router-dom";
 import { soundsAPI, healthCheck } from "./services/api";
 import SoundMap from "./components/Map/SoundMap";
@@ -289,10 +290,6 @@ const AnalyticsPage = ({ sounds }) => {
   const [timelineData, setTimelineData] = useState([]);
   const [generalStats, setGeneralStats] = useState({});
 
-  useEffect(() => {
-    calculateAnalytics();
-  }, [sounds]);
-
   const calculateAnalytics = () => {
     // Calcular estadísticas de emociones
     const emotions = {};
@@ -363,6 +360,10 @@ const AnalyticsPage = ({ sounds }) => {
       lastUpload: sounds[0] ? new Date(sounds[0].fecha) : null,
     });
   };
+
+  useEffect(() => {
+    calculateAnalytics();
+  }, [sounds]);
 
   return (
     <div className="analytics-page">
@@ -735,6 +736,8 @@ function App() {
               path="/analytics"
               element={<AnalyticsPage sounds={sounds} />}
             />
+            {/* Ruta catch-all para redirigir a home */}
+            <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </main>
 

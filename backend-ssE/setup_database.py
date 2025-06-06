@@ -1,5 +1,5 @@
 """
-Script para configurar la base de datos con datos de prueba
+Script para configurar la base de datos con datos de prueba - VERSIÓN CORREGIDA
 """
 
 import os
@@ -200,7 +200,7 @@ def insert_sample_data(collection):
         return False
 
 def test_queries(collection):
-    """Probar consultas básicas"""
+    """Probar consultas básicas - VERSIÓN CORREGIDA"""
     try:
         print("\n🔍 Probando consultas...")
         
@@ -212,19 +212,36 @@ def test_queries(collection):
         relajantes = collection.count_documents({"emociones": "relajante"})
         print(f"   😌 Sonidos relajantes: {relajantes}")
         
-        # Consulta geoespacial (cerca de Bogotá)
+        # Consulta geoespacial CORREGIDA (cerca de Bogotá)
+        # Usar $geoWithin con $centerSphere en lugar de $near con count_documents
         bogota_sounds = collection.count_documents({
             "ubicacion": {
-                "$near": {
-                    "$geometry": {
-                        "type": "Point",
-                        "coordinates": [-74.0721, 4.7110]
-                    },
-                    "$maxDistance": 50000  # 50km
+                "$geoWithin": {
+                    "$centerSphere": [
+                        [-74.0721, 4.7110],  # [longitud, latitud] - Bogotá
+                        50 / 6378.1  # 50km convertido a radianes (radio_tierra = 6378.1 km)
+                    ]
                 }
             }
         })
-        print(f"   🏙️ Sonidos cerca de Bogotá: {bogota_sounds}")
+        print(f"   🏙️ Sonidos cerca de Bogotá (50km): {bogota_sounds}")
+        
+        # Alternativa: usar find() con $near para demostrar que funciona
+        try:
+            bogota_sounds_near = list(collection.find({
+                "ubicacion": {
+                    "$near": {
+                        "$geometry": {
+                            "type": "Point",
+                            "coordinates": [-74.0721, 4.7110]
+                        },
+                        "$maxDistance": 50000  # 50km en metros
+                    }
+                }
+            }).limit(5))
+            print(f"   🗺️ Consulta $near funcional: {len(bogota_sounds_near)} sonidos encontrados")
+        except Exception as e:
+            print(f"   ⚠️ Consulta $near falló (normal en algunas configuraciones): {str(e)[:100]}...")
         
         # Consulta de agregación (emociones más populares)
         pipeline = [
@@ -238,6 +255,13 @@ def test_queries(collection):
         print("   🎭 Top 3 emociones:")
         for emotion in top_emotions:
             print(f"      • {emotion['_id']}: {emotion['count']} sonidos")
+        
+        # Prueba de consulta por ubicación específica (más flexible)
+        colombia_sounds = collection.count_documents({
+            "ubicacion.coordinates.1": {"$gte": -4.5, "$lte": 12.5},  # Latitud Colombia
+            "ubicacion.coordinates.0": {"$gte": -79, "$lte": -66}     # Longitud Colombia
+        })
+        print(f"   🇨🇴 Sonidos en Colombia: {colombia_sounds}")
         
         print("✅ Todas las consultas funcionan correctamente")
         return True
@@ -256,7 +280,7 @@ def main():
     
     # Configurar colecciones e índices
     collection = setup_collections_and_indexes(db)
-    if not collection:
+    if collection is None:  # ✅ CORREGIDO: usar "is None"
         return
     
     # Insertar datos de muestra
@@ -272,7 +296,7 @@ def main():
     print("\n🎉 ¡Base de datos configurada exitosamente!")
     print("📝 Próximos pasos:")
     print("   1. Iniciar el backend: python app.py")
-    print("   2. Instalar dependencias del frontend: cd frontend-sse && npm install")
+    print("   2. Instalar dependencias del frontend: cd ../frontend-sse && npm install")
     print("   3. Iniciar el frontend: npm start")
     print("   4. Abrir http://localhost:3000 en tu navegador")
 
