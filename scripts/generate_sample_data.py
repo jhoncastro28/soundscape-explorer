@@ -7,7 +7,7 @@ import sys
 import random
 from datetime import datetime, timedelta
 from pymongo import MongoClient
-from backend_ssE.config import Config
+from backend_sse.config import Config
 
 # Datos de muestra
 SAMPLE_SOUNDS = [
