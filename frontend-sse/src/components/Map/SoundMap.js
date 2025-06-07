@@ -25,9 +25,9 @@ L.Icon.Default.mergeOptions({
 function MapEventHandler({ onLocationSelect, showLocationSelector }) {
   const [marker, setMarker] = useState(null);
 
-  useMapEvents({
+  const map = useMapEvents({
     click(e) {
-      if (showLocationSelector) {
+      if (showLocationSelector && onLocationSelect) {
         const { lat, lng } = e.latlng;
         setMarker([lat, lng]);
         onLocationSelect(lat, lng);
@@ -50,7 +50,7 @@ function MapEventHandler({ onLocationSelect, showLocationSelector }) {
   ) : null;
 }
 
-// Crear icono personalizado basado en emoción
+// Crear icono personalizado basado en emoción - Optimizado
 const createEmotionIcon = (emotion) => {
   const color = EMOTION_COLORS[emotion] || "#666";
 
@@ -76,6 +76,7 @@ const createEmotionIcon = (emotion) => {
     `,
     iconSize: [24, 24],
     iconAnchor: [12, 12],
+    popupAnchor: [0, -12],
   });
 };
 
@@ -89,11 +90,24 @@ const SoundMap = ({
   height = "500px",
 }) => {
   const [selectedSound, setSelectedSound] = useState(null);
-  const [mapSounds, setMapSounds] = useState(sounds);
+  const [mapSounds, setMapSounds] = useState([]);
   const mapRef = useRef();
+  const [mapReady, setMapReady] = useState(false);
 
   useEffect(() => {
-    setMapSounds(sounds);
+    // Filtrar sonidos válidos
+    const validSounds = sounds.filter(
+      (sound) =>
+        sound &&
+        sound.ubicacion &&
+        sound.ubicacion.coordinates &&
+        Array.isArray(sound.ubicacion.coordinates) &&
+        sound.ubicacion.coordinates.length === 2 &&
+        typeof sound.ubicacion.coordinates[0] === "number" &&
+        typeof sound.ubicacion.coordinates[1] === "number"
+    );
+
+    setMapSounds(validSounds);
   }, [sounds]);
 
   const handleMarkerClick = (sound) => {
@@ -106,11 +120,11 @@ const SoundMap = ({
   const handleLoadSoundsInArea = async () => {
     if (!mapRef.current) return;
 
-    const map = mapRef.current;
-    const bounds = map.getBounds();
-    const center = bounds.getCenter();
-
     try {
+      const map = mapRef.current;
+      const bounds = map.getBounds();
+      const center = bounds.getCenter();
+
       const response = await soundsAPI.getSoundsByLocation(
         center.lat,
         center.lng,
@@ -125,6 +139,111 @@ const SoundMap = ({
     }
   };
 
+  // Renderizar marcadores de forma más segura
+  const renderMarkers = () => {
+    return mapSounds.map((sound) => {
+      try {
+        // Validación adicional
+        if (!sound._id || !sound.ubicacion || !sound.ubicacion.coordinates) {
+          return null;
+        }
+
+        const coordinates = sound.ubicacion.coordinates;
+        const position = [coordinates[1], coordinates[0]]; // [lat, lng]
+
+        // Validar coordenadas
+        if (!Array.isArray(position) || position.length !== 2) {
+          console.warn("Coordenadas inválidas para sonido:", sound._id);
+          return null;
+        }
+
+        if (
+          typeof position[0] !== "number" ||
+          typeof position[1] !== "number"
+        ) {
+          console.warn("Coordenadas no numéricas para sonido:", sound._id);
+          return null;
+        }
+
+        const primaryEmotion = sound.emociones?.[0] || "neutral";
+        const icon = createEmotionIcon(primaryEmotion);
+
+        return (
+          <Marker
+            key={sound._id}
+            position={position}
+            icon={icon}
+            eventHandlers={{
+              click: () => handleMarkerClick(sound),
+            }}
+          >
+            <Popup closeOnClick={false} autoClose={false}>
+              <div className="sound-popup">
+                <h3>{sound.nombre || "Sin título"}</h3>
+                <p>
+                  <strong>Autor:</strong> {sound.autor || "Desconocido"}
+                </p>
+
+                {sound.emociones && sound.emociones.length > 0 && (
+                  <div className="emotions">
+                    <strong>Emociones:</strong>
+                    <div className="emotion-tags">
+                      {sound.emociones.map((emotion, index) => (
+                        <span
+                          key={index}
+                          className="emotion-tag"
+                          style={{
+                            backgroundColor: EMOTION_COLORS[emotion] || "#666",
+                          }}
+                        >
+                          {emotion}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {sound.descripcion && (
+                  <p>
+                    <strong>Descripción:</strong> {sound.descripcion}
+                  </p>
+                )}
+
+                {sound.etiquetas && sound.etiquetas.length > 0 && (
+                  <div className="tags">
+                    <strong>Etiquetas:</strong> {sound.etiquetas.join(", ")}
+                  </div>
+                )}
+
+                {sound.audio_url && (
+                  <div className="audio-player-container">
+                    <AudioPlayer
+                      audioUrl={`${APP_CONFIG.UPLOADS_URL}${sound.audio_url}`}
+                      title={sound.nombre}
+                      compact={true}
+                    />
+                  </div>
+                )}
+
+                <div className="sound-actions">
+                  <button
+                    onClick={() => handleMarkerClick(sound)}
+                    className="btn-primary"
+                  >
+                    Ver detalles
+                  </button>
+                </div>
+              </div>
+            </Popup>
+          </Marker>
+        );
+      } catch (error) {
+        console.error("Error renderizando marcador:", error);
+        return null;
+      }
+    });
+  };
+
   return (
     <div className="sound-map-container" style={{ height }}>
       <MapContainer
@@ -132,6 +251,7 @@ const SoundMap = ({
         zoom={zoom}
         style={{ height: "100%", width: "100%" }}
         ref={mapRef}
+        whenCreated={() => setMapReady(true)}
       >
         <TileLayer
           url={MAP_CONFIG.tileLayer}
@@ -139,87 +259,15 @@ const SoundMap = ({
         />
 
         {/* Event handler para selección de ubicación */}
-        <MapEventHandler
-          onLocationSelect={onLocationSelect}
-          showLocationSelector={showLocationSelector}
-        />
+        {showLocationSelector && (
+          <MapEventHandler
+            onLocationSelect={onLocationSelect}
+            showLocationSelector={showLocationSelector}
+          />
+        )}
 
-        {/* Marcadores de sonidos */}
-        {mapSounds.map((sound) => {
-          const position = [
-            sound.ubicacion.coordinates[1], // lat
-            sound.ubicacion.coordinates[0], // lng
-          ];
-
-          const primaryEmotion = sound.emociones?.[0] || "neutral";
-          const icon = createEmotionIcon(primaryEmotion);
-
-          return (
-            <Marker
-              key={sound._id}
-              position={position}
-              icon={icon}
-              eventHandlers={{
-                click: () => handleMarkerClick(sound),
-              }}
-            >
-              <Popup>
-                <div className="sound-popup">
-                  <h3>{sound.nombre}</h3>
-                  <p>
-                    <strong>Autor:</strong> {sound.autor}
-                  </p>
-
-                  {sound.emociones && sound.emociones.length > 0 && (
-                    <div className="emotions">
-                      <strong>Emociones:</strong>
-                      <div className="emotion-tags">
-                        {sound.emociones.map((emotion, index) => (
-                          <span
-                            key={index}
-                            className="emotion-tag"
-                            style={{ backgroundColor: EMOTION_COLORS[emotion] }}
-                          >
-                            {emotion}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {sound.descripcion && (
-                    <p>
-                      <strong>Descripción:</strong> {sound.descripcion}
-                    </p>
-                  )}
-
-                  {sound.etiquetas && sound.etiquetas.length > 0 && (
-                    <div className="tags">
-                      <strong>Etiquetas:</strong> {sound.etiquetas.join(", ")}
-                    </div>
-                  )}
-
-                  {sound.audio_url && (
-                    <div className="audio-player-container">
-                      <AudioPlayer
-                        audioUrl={`${APP_CONFIG.UPLOADS_URL}${sound.audio_url}`}
-                      />
-                    </div>
-                  )}
-
-                  <div className="sound-actions">
-                    <button
-                      onClick={() => handleMarkerClick(sound)}
-                      className="btn-primary"
-                    >
-                      Ver detalles
-                    </button>
-                  </div>
-                </div>
-              </Popup>
-            </Marker>
-          );
-        })}
+        {/* Marcadores de sonidos - Solo renderizar cuando el mapa esté listo */}
+        {mapReady && renderMarkers()}
       </MapContainer>
 
       {/* Controles del mapa */}
