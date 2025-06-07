@@ -1,312 +1,993 @@
-/* Estilos para el componente de mapa */
-.sound-map-container {
+/* Contenedor principal del mapa moderno */
+.sound-map-container-modern {
     position: relative;
-    border-radius: var(--border-radius);
+    border-radius: 20px;
     overflow: hidden;
-    box-shadow: var(--box-shadow);
-    border: 1px solid var(--border-color);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
 }
 
-/* Controles del mapa */
-.map-controls {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    z-index: 1000;
-    display: flex;
-    flex-direction: column;
-    gap: var(--spacing-sm);
+.modern-map {
+    border-radius: 20px;
 }
 
-.map-controls button {
-    background-color: var(--bg-primary);
-    border: 1px solid var(--border-color);
-    border-radius: var(--border-radius);
-    padding: var(--spacing-sm);
-    cursor: pointer;
-    transition: all 0.2s ease;
-    box-shadow: var(--box-shadow);
-    font-size: 0.875rem;
-    white-space: nowrap;
-}
+/* =================
+   MARCADORES NORMALES
+   ================= */
 
-.map-controls button:hover {
-    background-color: var(--primary-color);
-    color: white;
-    transform: translateY(-1px);
-    box-shadow: var(--box-shadow-lg);
-}
-
-.map-info {
-    background-color: var(--bg-primary);
-    border: 1px solid var(--border-color);
-    border-radius: var(--border-radius);
-    padding: var(--spacing-xs) var(--spacing-sm);
-    font-size: 0.8rem;
-    color: var(--text-secondary);
-    box-shadow: var(--box-shadow);
-}
-
-/* Marcadores personalizados */
-.custom-marker {
+.custom-sound-marker {
     background: transparent;
     border: none;
+    cursor: pointer;
 }
 
-.custom-marker div {
-    border-radius: 50%;
+.sound-marker-container {
+    position: relative;
+    width: 40px;
+    height: 40px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 10px;
+}
+
+/* Pulsos animados */
+.sound-marker-pulse,
+.sound-marker-pulse-2 {
+    position: absolute;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--pulse-color);
+    animation: pulse-wave 2s infinite ease-out;
+    z-index: 1;
+}
+
+.sound-marker-pulse-2 {
+    animation-delay: 1s;
+    animation-duration: 2.5s;
+}
+
+@keyframes pulse-wave {
+    0% {
+        transform: scale(0.5);
+        opacity: 1;
+    }
+
+    100% {
+        transform: scale(2.5);
+        opacity: 0;
+    }
+}
+
+/* Marcador principal */
+.sound-marker-main {
+    position: relative;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--marker-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+    z-index: 3;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border: 3px solid white;
+}
+
+.sound-marker-main:hover {
+    transform: scale(1.2);
+    box-shadow: 0 12px 35px rgba(0, 0, 0, 0.4);
+}
+
+.sound-marker-inner {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0.05) 100%);
+}
+
+.sound-emoji {
+    font-size: 16px;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+}
+
+/* Anillo decorativo */
+.sound-marker-ring {
+    position: absolute;
+    top: -6px;
+    left: -6px;
+    right: -6px;
+    bottom: -6px;
+    border: 2px solid var(--marker-color);
+    border-radius: 50%;
+    opacity: 0;
+    transform: scale(0.8);
+    transition: all 0.3s ease;
+}
+
+.sound-marker-main:hover .sound-marker-ring {
+    opacity: 0.6;
+    transform: scale(1);
+}
+
+/* Tooltip del marcador (hover rápido) */
+.sound-marker-tooltip {
+    position: absolute;
+    top: -45px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.9);
+    backdrop-filter: blur(20px);
     color: white;
-    font-weight: bold;
+    padding: 8px 12px;
+    border-radius: 12px;
+    font-size: 12px;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.3s ease;
+    z-index: 10;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.sound-marker-tooltip::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 6px solid transparent;
+    border-top-color: rgba(0, 0, 0, 0.9);
+}
+
+.sound-marker-container:hover .sound-marker-tooltip {
+    opacity: 1;
+    transform: translateX(-50%) translateY(-5px);
+}
+
+.tooltip-content {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.tooltip-title {
+    font-weight: 600;
+    color: white;
+}
+
+.tooltip-emotion {
+    font-size: 10px;
+    opacity: 0.8;
+    text-transform: lowercase;
+}
+
+/* =================
+   MARCADORES DESTACADOS
+   ================= */
+
+.custom-sound-marker.featured {
+    background: transparent;
+    border: none;
     cursor: pointer;
-    transition: transform 0.2s ease;
 }
 
-.custom-marker:hover div {
-    transform: scale(1.1);
+.featured-marker-container {
+    position: relative;
+    width: 50px;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
-/* Popups de sonidos */
-.sound-popup {
-    min-width: 250px;
+/* Rayos giratorios para destacados */
+.featured-marker-rays {
+    position: absolute;
+    width: 60px;
+    height: 60px;
+    background: conic-gradient(from 0deg, transparent, var(--marker-color), transparent, var(--marker-color), transparent);
+    border-radius: 50%;
+    animation: rotate-rays 4s linear infinite;
+    opacity: 0.6;
+    z-index: 1;
+}
+
+@keyframes rotate-rays {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+/* Pulso para destacados */
+.featured-marker-pulse {
+    position: absolute;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: radial-gradient(circle, var(--marker-color) 0%, transparent 70%);
+    animation: featured-pulse 3s infinite ease-in-out;
+    z-index: 2;
+}
+
+@keyframes featured-pulse {
+
+    0%,
+    100% {
+        transform: scale(0.8);
+        opacity: 0.7;
+    }
+
+    50% {
+        transform: scale(1.4);
+        opacity: 0.3;
+    }
+}
+
+/* Marcador principal destacado */
+.featured-marker-main {
+    position: relative;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--marker-color) 0%, #ffd700 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
+    z-index: 4;
+    transition: all 0.3s ease;
+    border: 4px solid white;
+}
+
+.featured-marker-main:hover {
+    transform: scale(1.3) rotate(5deg);
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.5);
+}
+
+.featured-marker-crown {
+    position: absolute;
+    top: -15px;
+    font-size: 12px;
+    animation: crown-bounce 2s infinite ease-in-out;
+}
+
+@keyframes crown-bounce {
+
+    0%,
+    100% {
+        transform: translateY(0px);
+    }
+
+    50% {
+        transform: translateY(-3px);
+    }
+}
+
+.featured-marker-inner {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.3) 0%, rgba(255, 255, 255, 0.1) 100%);
+}
+
+/* Destellos para destacados */
+.featured-marker-sparkles {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+}
+
+.sparkle {
+    position: absolute;
+    font-size: 8px;
+    animation: sparkle-twinkle 2s infinite ease-in-out;
+}
+
+.sparkle-1 {
+    top: -8px;
+    right: -8px;
+    animation-delay: 0s;
+}
+
+.sparkle-2 {
+    bottom: -8px;
+    left: -8px;
+    animation-delay: 0.7s;
+}
+
+.sparkle-3 {
+    top: 50%;
+    right: -12px;
+    animation-delay: 1.4s;
+}
+
+@keyframes sparkle-twinkle {
+
+    0%,
+    100% {
+        opacity: 0;
+        transform: scale(0.5);
+    }
+
+    50% {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+/* Tooltip para destacados */
+.featured-tooltip {
+    position: absolute;
+    top: -55px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 10px 14px;
+    border-radius: 15px;
+    font-size: 12px;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.3s ease;
+    z-index: 10;
+    border: 2px solid #ffd700;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+}
+
+.featured-tooltip::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 8px solid transparent;
+    border-top-color: #ffd700;
+}
+
+.featured-marker-container:hover .featured-tooltip {
+    opacity: 1;
+    transform: translateX(-50%) translateY(-5px);
+}
+
+.tooltip-badge {
+    display: block;
+    font-size: 9px;
+    color: #ffd700;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 2px;
+}
+
+/* =================
+   TOOLTIPS DE LEAFLET
+   ================= */
+
+.sound-marker-tooltip-popup {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+}
+
+.sound-marker-tooltip-popup .leaflet-tooltip-content {
+    background: rgba(0, 0, 0, 0.95) !important;
+    backdrop-filter: blur(20px);
+    color: white !important;
+    border-radius: 15px !important;
+    padding: 12px 16px !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4) !important;
+    margin: 0 !important;
+}
+
+.tooltip-popup-content {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 200px;
+}
+
+.tooltip-popup-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.tooltip-popup-emoji {
+    font-size: 16px;
+}
+
+.tooltip-popup-title {
+    font-weight: 600;
+    font-size: 14px;
+    color: white;
+}
+
+.tooltip-popup-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 12px;
+    opacity: 0.9;
+}
+
+.tooltip-popup-author,
+.tooltip-popup-emotion {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.tooltip-popup-action {
+    font-size: 11px;
+    opacity: 0.8;
+    text-align: center;
+    padding-top: 4px;
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
+    color: #a8edea;
+}
+
+/* =================
+   POPUPS MODERNOS
+   ================= */
+
+.modern-sound-popup .leaflet-popup-content-wrapper {
+    background: rgba(255, 255, 255, 0.98) !important;
+    backdrop-filter: blur(20px) !important;
+    border-radius: 20px !important;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25) !important;
+    border: 1px solid rgba(255, 255, 255, 0.3) !important;
+    padding: 0 !important;
+}
+
+.modern-sound-popup .leaflet-popup-content {
+    margin: 0 !important;
+    padding: 0 !important;
+    width: auto !important;
+}
+
+.modern-sound-popup .leaflet-popup-close-button {
+    background: rgba(255, 255, 255, 0.9) !important;
+    border-radius: 50% !important;
+    width: 30px !important;
+    height: 30px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    color: #667eea !important;
+    font-size: 18px !important;
+    font-weight: bold !important;
+    transition: all 0.3s ease !important;
+    border: 2px solid rgba(102, 126, 234, 0.2) !important;
+    top: 10px !important;
+    right: 10px !important;
+}
+
+.modern-sound-popup .leaflet-popup-close-button:hover {
+    background: #667eea !important;
+    color: white !important;
+    transform: scale(1.1) !important;
+}
+
+.sound-popup-modern {
+    padding: 24px;
     max-width: 350px;
 }
 
-.sound-popup h3 {
-    font-size: 1.1rem;
-    margin-bottom: var(--spacing-sm);
-    color: var(--text-primary);
+.popup-modern-header {
+    margin-bottom: 20px;
 }
 
-.sound-popup p {
-    margin-bottom: var(--spacing-xs);
-    font-size: 0.9rem;
-    color: var(--text-secondary);
-}
-
-.sound-popup strong {
-    color: var(--text-primary);
-}
-
-/* Emociones en popup */
-.sound-popup .emotions {
-    margin: var(--spacing-sm) 0;
-}
-
-.sound-popup .emotion-tags {
+.popup-header-content {
     display: flex;
-    flex-wrap: wrap;
-    gap: var(--spacing-xs);
-    margin-top: var(--spacing-xs);
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 8px;
 }
 
-.sound-popup .emotion-tag {
-    padding: 2px 6px;
-    border-radius: 12px;
-    font-size: 0.75rem;
-    color: white;
+.popup-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: #2d3748;
+    margin: 0;
+    line-height: 1.3;
+    flex: 1;
+    padding-right: 10px;
+}
+
+.popup-close-hint {
+    color: #a0aec0;
+    font-size: 12px;
+    opacity: 0.5;
+}
+
+.popup-author-line {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    color: #718096;
+}
+
+.author-icon {
+    font-size: 12px;
+}
+
+.author-name {
     font-weight: 500;
 }
 
-/* Etiquetas en popup */
-.sound-popup .tags {
-    margin: var(--spacing-sm) 0;
-    font-size: 0.85rem;
-}
-
-/* Reproductor en popup */
-.audio-player-container {
-    margin: var(--spacing-md) 0;
-    background-color: var(--bg-secondary);
-    border-radius: var(--border-radius);
-    padding: var(--spacing-sm);
-}
-
-/* Acciones del sonido */
-.sound-actions {
-    margin-top: var(--spacing-md);
+.popup-modern-content {
     display: flex;
-    justify-content: flex-end;
-    gap: var(--spacing-sm);
+    flex-direction: column;
+    gap: 16px;
 }
 
-.sound-actions button {
-    padding: var(--spacing-xs) var(--spacing-sm);
-    font-size: 0.875rem;
+/* Secciones del popup */
+.popup-emotions,
+.popup-description,
+.popup-audio-section {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
 }
 
-/* Estilos específicos para Leaflet */
-.leaflet-container {
-    font-family: inherit;
+.emotions-label,
+.description-label,
+.audio-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #4a5568;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
-.leaflet-popup-content-wrapper {
-    border-radius: var(--border-radius);
-    box-shadow: var(--box-shadow-lg);
+.emotions-icon,
+.description-icon,
+.audio-icon {
+    font-size: 14px;
 }
 
-.leaflet-popup-content {
-    margin: var(--spacing-md);
-    line-height: 1.4;
+.popup-emotion-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-items: center;
 }
 
-.leaflet-popup-close-button {
-    color: var(--text-secondary);
-    font-size: 18px;
-    font-weight: bold;
+.popup-emotion-tag {
+    background: var(--color, #667eea);
+    color: white;
+    padding: 4px 10px;
+    border-radius: 15px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: lowercase;
 }
 
-.leaflet-popup-close-button:hover {
-    color: var(--text-primary);
+.emotion-count-badge {
+    background: #e2e8f0;
+    color: #718096;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 10px;
+    font-weight: 600;
 }
 
-/* Tooltip para marcadores */
-.leaflet-tooltip {
-    background-color: var(--bg-primary);
-    border: 1px solid var(--border-color);
-    border-radius: var(--border-radius);
-    box-shadow: var(--box-shadow);
-    color: var(--text-primary);
+.description-text {
+    font-size: 14px;
+    line-height: 1.5;
+    color: #4a5568;
+    margin: 0;
 }
 
-.leaflet-tooltip-top:before {
-    border-top-color: var(--border-color);
+.popup-audio-player {
+    background: #f7fafc;
+    border-radius: 12px;
+    padding: 8px;
+    border: 1px solid #e2e8f0;
 }
 
-.leaflet-tooltip-bottom:before {
-    border-bottom-color: var(--border-color);
+.popup-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding-top: 16px;
+    border-top: 1px solid #e2e8f0;
 }
 
-.leaflet-tooltip-left:before {
-    border-left-color: var(--border-color);
+.popup-detail-btn {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    padding: 12px 20px;
+    border-radius: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-size: 14px;
 }
 
-.leaflet-tooltip-right:before {
-    border-right-color: var(--border-color);
+.popup-detail-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 25px rgba(102, 126, 234, 0.3);
 }
 
-/* Estados de carga */
-.map-loading {
+.btn-icon {
+    font-size: 14px;
+}
+
+.popup-tags {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: #718096;
+}
+
+.tags-icon {
+    font-size: 12px;
+}
+
+.tags-text {
+    opacity: 0.8;
+}
+
+/* =================
+   CONTROLES DEL MAPA
+   ================= */
+
+.map-controls-modern {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.map-control-btn {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 12px;
+    padding: 12px 16px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #4a5568;
+}
+
+.map-control-btn:hover {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 12px 30px rgba(102, 126, 234, 0.3);
+}
+
+.btn-text {
+    white-space: nowrap;
+}
+
+.map-info-modern {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 12px;
+    padding: 12px 16px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.info-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: #4a5568;
+    font-weight: 500;
+}
+
+.info-item.hovered {
+    color: #667eea;
+    animation: pulse-text 1s infinite;
+}
+
+@keyframes pulse-text {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.7;
+    }
+}
+
+.info-icon {
+    font-size: 14px;
+}
+
+/* =================
+   LEYENDA DE EMOCIONES
+   ================= */
+
+.emotion-legend {
+    position: absolute;
+    bottom: 15px;
+    left: 15px;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 15px;
+    padding: 16px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+    max-width: 200px;
+}
+
+.legend-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+    font-weight: 600;
+    color: #4a5568;
+    font-size: 14px;
+}
+
+.legend-icon {
+    font-size: 16px;
+}
+
+.legend-items {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.legend-color {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: 2px solid white;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.legend-label {
+    font-size: 12px;
+    color: #718096;
+    text-transform: lowercase;
+    font-weight: 500;
+}
+
+/* =================
+   INDICADOR DE CARGA
+   ================= */
+
+.map-loading-indicator {
     position: absolute;
     top: 0;
     left: 0;
     right: 0;
     bottom: 0;
-    background-color: rgba(255, 255, 255, 0.8);
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     display: flex;
     align-items: center;
     justify-content: center;
     z-index: 2000;
+    border-radius: 20px;
 }
 
-.map-loading-spinner {
-    width: 40px;
-    height: 40px;
-    border: 4px solid var(--bg-tertiary);
-    border-top: 4px solid var(--primary-color);
+.loading-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    color: white;
+}
+
+.loading-spinner-map {
+    width: 50px;
+    height: 50px;
+    border: 4px solid rgba(255, 255, 255, 0.3);
+    border-top: 4px solid white;
     border-radius: 50%;
-    animation: spin 1s linear infinite;
+    animation: spin-map 1s linear infinite;
 }
 
-/* Responsive */
+@keyframes spin-map {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+.loading-text {
+    font-size: 16px;
+    font-weight: 600;
+    text-align: center;
+}
+
+/* =================
+   POPUP DE UBICACIÓN
+   ================= */
+
+.location-popup {
+    padding: 16px;
+    min-width: 200px;
+}
+
+.popup-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+    font-weight: 600;
+    color: #4a5568;
+}
+
+.location-icon {
+    font-size: 16px;
+}
+
+.coordinates {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.coordinate-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 13px;
+}
+
+.label {
+    font-weight: 500;
+    color: #718096;
+}
+
+.value {
+    font-family: monospace;
+    color: #4a5568;
+    background: #f7fafc;
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+
+/* =================
+   RESPONSIVE
+   ================= */
+
 @media (max-width: 768px) {
-    .map-controls {
-        top: 5px;
-        right: 5px;
+    .map-controls-modern {
+        top: 10px;
+        right: 10px;
     }
 
-    .map-controls button {
-        padding: var(--spacing-xs);
-        font-size: 0.8rem;
+    .map-control-btn {
+        padding: 10px 12px;
+        font-size: 13px;
     }
 
-    .sound-popup {
-        min-width: 200px;
+    .btn-text {
+        display: none;
+    }
+
+    .emotion-legend {
+        bottom: 10px;
+        left: 10px;
+        padding: 12px;
+        max-width: 150px;
+    }
+
+    .legend-header {
+        font-size: 13px;
+    }
+
+    .legend-label {
+        font-size: 11px;
+    }
+
+    .sound-popup-modern {
+        padding: 20px;
         max-width: 280px;
     }
 
-    .sound-popup h3 {
-        font-size: 1rem;
+    .popup-title {
+        font-size: 16px;
     }
 
-    .audio-player-container {
-        padding: var(--spacing-xs);
+    .sound-marker-tooltip,
+    .featured-tooltip {
+        font-size: 11px;
+        padding: 6px 10px;
     }
 
-    .sound-actions {
-        flex-direction: column;
-    }
-
-    .sound-actions button {
-        width: 100%;
+    .tooltip-popup-content {
+        min-width: 180px;
     }
 }
 
-/* Modo de selección de ubicación */
-.sound-map-container.location-selector {
+/* =================
+   MODO SELECTOR DE UBICACIÓN
+   ================= */
+
+.sound-map-container-modern.location-selector {
     cursor: crosshair;
 }
 
-.sound-map-container.location-selector .leaflet-container {
+.sound-map-container-modern.location-selector .leaflet-container {
     cursor: crosshair;
 }
 
-/* Animaciones */
-@keyframes markerBounce {
+.sound-map-container-modern.location-selector::after {
+    content: '📍 Haz click para seleccionar ubicación';
+    position: absolute;
+    top: 15px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(102, 126, 234, 0.95);
+    color: white;
+    padding: 12px 20px;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 600;
+    z-index: 1000;
+    animation: bounce-hint 2s infinite ease-in-out;
+}
+
+@keyframes bounce-hint {
 
     0%,
-    20%,
-    50%,
-    80%,
     100% {
-        transform: translateY(0);
+        transform: translateX(-50%) translateY(0px);
     }
 
-    40% {
-        transform: translateY(-10px);
+    50% {
+        transform: translateX(-50%) translateY(-5px);
     }
-
-    60% {
-        transform: translateY(-5px);
-    }
-}
-
-.custom-marker.new-marker div {
-    animation: markerBounce 1s ease infinite;
-}
-
-/* Clusters de marcadores (si se implementan en el futuro) */
-.marker-cluster {
-    background-color: var(--primary-color);
-    border-radius: 50%;
-    color: white;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: bold;
-    border: 2px solid white;
-    box-shadow: var(--box-shadow);
-}
-
-.marker-cluster.small {
-    width: 30px;
-    height: 30px;
-    font-size: 0.8rem;
-}
-
-.marker-cluster.medium {
-    width: 40px;
-    height: 40px;
-    font-size: 0.9rem;
-    background-color: var(--warning-color);
-}
-
-.marker-cluster.large {
-    width: 50px;
-    height: 50px;
-    font-size: 1rem;
-    background-color: var(--error-color);
 }
