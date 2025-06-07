@@ -1,163 +1,106 @@
 import React, { useState, useRef, useEffect } from "react";
-import WaveSurfer from "wavesurfer.js";
-import { AUDIO_CONFIG } from "../../utils/constants";
 import "./AudioPlayer.css";
 
-const AudioPlayer = ({ audioUrl, title = "Audio", compact = false }) => {
+const SimpleAudioPlayer = ({ audioUrl, title = "Audio", compact = false }) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [duration, setDuration] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
-  const [volume, setVolume] = useState(AUDIO_CONFIG.defaultVolume);
-  const [isLoading, setIsLoading] = useState(false);
+  const [volume, setVolume] = useState(0.7);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const waveformRef = useRef(null);
-  const wavesurfer = useRef(null);
-  const isDestroyedRef = useRef(false);
+  const audioRef = useRef(null);
 
   useEffect(() => {
-    if (!audioUrl || !waveformRef.current) return;
+    const audio = audioRef.current;
+    if (!audio || !audioUrl) return;
 
-    // Reset estado
-    isDestroyedRef.current = false;
+    console.log("🎵 Cargando audio:", audioUrl);
     setError(null);
     setIsLoading(true);
 
-    // Limpiar instancia anterior si existe
-    if (wavesurfer.current) {
-      try {
-        wavesurfer.current.destroy();
-      } catch (e) {
-        // Ignorar errores de cleanup
-      }
-      wavesurfer.current = null;
-    }
-
-    // Crear nueva instancia con manejo de errores
-    try {
-      wavesurfer.current = WaveSurfer.create({
-        container: waveformRef.current,
-        waveColor: "#4f46e5",
-        progressColor: "#7c3aed",
-        cursorColor: "#f59e0b",
-        barWidth: 2,
-        barGap: 1,
-        height: compact ? 40 : 80,
-        normalize: true,
-        backend: "WebAudio",
-        responsive: true,
-        // Añadir configuración para evitar errores
-        mediaControls: false,
-        interaction: true,
-      });
-
-      // Event listeners con verificación de estado
-      wavesurfer.current.on("ready", () => {
-        if (!isDestroyedRef.current && wavesurfer.current) {
-          setDuration(wavesurfer.current.getDuration());
-          setIsLoading(false);
-          setError(null);
-        }
-      });
-
-      wavesurfer.current.on("play", () => {
-        if (!isDestroyedRef.current) {
-          setIsPlaying(true);
-        }
-      });
-
-      wavesurfer.current.on("pause", () => {
-        if (!isDestroyedRef.current) {
-          setIsPlaying(false);
-        }
-      });
-
-      wavesurfer.current.on("finish", () => {
-        if (!isDestroyedRef.current) {
-          setIsPlaying(false);
-          setCurrentTime(0);
-        }
-      });
-
-      wavesurfer.current.on("audioprocess", () => {
-        if (!isDestroyedRef.current && wavesurfer.current) {
-          setCurrentTime(wavesurfer.current.getCurrentTime());
-        }
-      });
-
-      wavesurfer.current.on("error", (error) => {
-        if (!isDestroyedRef.current) {
-          console.warn("WaveSurfer error:", error);
-          setError("Error cargando el audio");
-          setIsLoading(false);
-        }
-      });
-
-      // Cargar audio con manejo de errores
-      if (wavesurfer.current && !isDestroyedRef.current) {
-        wavesurfer.current.load(audioUrl);
-      }
-    } catch (error) {
-      console.error("Error inicializando WaveSurfer:", error);
-      setError("Error inicializando reproductor");
+    // Event listeners
+    const handleLoadedData = () => {
+      console.log("✅ Audio cargado correctamente");
+      setDuration(audio.duration);
       setIsLoading(false);
-    }
-
-    return () => {
-      // Cleanup
-      isDestroyedRef.current = true;
-
-      if (wavesurfer.current) {
-        try {
-          // Pausar antes de destruir
-          if (wavesurfer.current.isPlaying && wavesurfer.current.isPlaying()) {
-            wavesurfer.current.pause();
-          }
-
-          // Pequeño delay para evitar race conditions
-          setTimeout(() => {
-            if (wavesurfer.current) {
-              try {
-                wavesurfer.current.destroy();
-              } catch (e) {
-                // Ignorar errores de cleanup en desarrollo
-                console.warn("Error durante cleanup de WaveSurfer:", e.message);
-              }
-              wavesurfer.current = null;
-            }
-          }, 100);
-        } catch (error) {
-          console.warn("Error durante cleanup:", error.message);
-        }
-      }
+      setError(null);
     };
-  }, [audioUrl, compact]);
+
+    const handleError = (e) => {
+      console.error("❌ Error cargando audio:", e);
+      setError("Error cargando el audio");
+      setIsLoading(false);
+    };
+
+    const handleTimeUpdate = () => {
+      setCurrentTime(audio.currentTime);
+    };
+
+    const handleEnded = () => {
+      setIsPlaying(false);
+      setCurrentTime(0);
+    };
+
+    const handlePlay = () => setIsPlaying(true);
+    const handlePause = () => setIsPlaying(false);
+
+    // Add event listeners
+    audio.addEventListener("loadeddata", handleLoadedData);
+    audio.addEventListener("error", handleError);
+    audio.addEventListener("timeupdate", handleTimeUpdate);
+    audio.addEventListener("ended", handleEnded);
+    audio.addEventListener("play", handlePlay);
+    audio.addEventListener("pause", handlePause);
+
+    // Set volume
+    audio.volume = volume;
+
+    // Cleanup
+    return () => {
+      audio.removeEventListener("loadeddata", handleLoadedData);
+      audio.removeEventListener("error", handleError);
+      audio.removeEventListener("timeupdate", handleTimeUpdate);
+      audio.removeEventListener("ended", handleEnded);
+      audio.removeEventListener("play", handlePlay);
+      audio.removeEventListener("pause", handlePause);
+    };
+  }, [audioUrl, volume]);
 
   const togglePlayPause = () => {
-    if (!wavesurfer.current || isDestroyedRef.current) return;
+    const audio = audioRef.current;
+    if (!audio) return;
 
     try {
       if (isPlaying) {
-        wavesurfer.current.pause();
+        audio.pause();
       } else {
-        wavesurfer.current.play();
+        audio.play();
       }
     } catch (error) {
-      console.warn("Error en play/pause:", error);
+      console.error("Error en play/pause:", error);
       setError("Error controlando reproducción");
     }
+  };
+
+  const handleSeek = (e) => {
+    const audio = audioRef.current;
+    if (!audio || !duration) return;
+
+    const rect = e.target.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const percentage = x / rect.width;
+    const newTime = percentage * duration;
+
+    audio.currentTime = newTime;
+    setCurrentTime(newTime);
   };
 
   const handleVolumeChange = (e) => {
     const newVolume = parseFloat(e.target.value);
     setVolume(newVolume);
-
-    if (wavesurfer.current && !isDestroyedRef.current) {
-      try {
-        wavesurfer.current.setVolume(newVolume);
-      } catch (error) {
-        console.warn("Error cambiando volumen:", error);
-      }
+    if (audioRef.current) {
+      audioRef.current.volume = newVolume;
     }
   };
 
@@ -168,26 +111,13 @@ const AudioPlayer = ({ audioUrl, title = "Audio", compact = false }) => {
     return `${minutes}:${seconds.toString().padStart(2, "0")}`;
   };
 
-  const handleSeek = (e) => {
-    if (!wavesurfer.current || !duration || isDestroyedRef.current) return;
-
-    try {
-      const rect = e.currentTarget.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const percentage = x / rect.width;
-      const seekTime = percentage * duration;
-
-      wavesurfer.current.seekTo(percentage);
-      setCurrentTime(seekTime);
-    } catch (error) {
-      console.warn("Error en seek:", error);
-    }
-  };
-
   if (error) {
     return (
       <div className={`audio-player ${compact ? "compact" : ""} error`}>
         <span className="error-message">❌ {error}</span>
+        <div style={{ fontSize: "0.8rem", color: "#666", marginTop: "5px" }}>
+          URL: {audioUrl}
+        </div>
       </div>
     );
   }
@@ -196,10 +126,18 @@ const AudioPlayer = ({ audioUrl, title = "Audio", compact = false }) => {
     <div className={`audio-player ${compact ? "compact" : ""}`}>
       {!compact && title && <div className="audio-title">🎵 {title}</div>}
 
+      {/* Audio element oculto */}
+      <audio
+        ref={audioRef}
+        src={audioUrl}
+        preload="metadata"
+        style={{ display: "none" }}
+      />
+
       <div className="audio-controls">
         <button
           onClick={togglePlayPause}
-          disabled={isLoading || isDestroyedRef.current}
+          disabled={isLoading}
           className="play-pause-btn"
           title={isPlaying ? "Pausar" : "Reproducir"}
         >
@@ -226,16 +164,45 @@ const AudioPlayer = ({ audioUrl, title = "Audio", compact = false }) => {
         )}
       </div>
 
-      <div className="waveform-container">
-        <div ref={waveformRef} className="waveform" onClick={handleSeek} />
-        {isLoading && (
-          <div className="loading-overlay">
-            <span>Cargando audio...</span>
-          </div>
-        )}
+      {/* Barra de progreso simple */}
+      <div
+        className="progress-bar"
+        onClick={handleSeek}
+        style={{
+          width: "100%",
+          height: "8px",
+          backgroundColor: "#e5e7eb",
+          borderRadius: "4px",
+          cursor: "pointer",
+          marginTop: "8px",
+          position: "relative",
+        }}
+      >
+        <div
+          style={{
+            width: duration ? `${(currentTime / duration) * 100}%` : "0%",
+            height: "100%",
+            backgroundColor: "#4f46e5",
+            borderRadius: "4px",
+            transition: "width 0.1s",
+          }}
+        />
       </div>
+
+      {isLoading && (
+        <div
+          style={{
+            fontSize: "0.8rem",
+            color: "#666",
+            textAlign: "center",
+            marginTop: "5px",
+          }}
+        >
+          Cargando: {audioUrl.split("/").pop()}
+        </div>
+      )}
     </div>
   );
 };
 
-export default AudioPlayer;
+export default SimpleAudioPlayer;

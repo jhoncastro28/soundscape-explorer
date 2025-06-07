@@ -10,10 +10,10 @@ import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { soundsAPI } from "../../services/api";
 import { APP_CONFIG, MAP_CONFIG, EMOTION_COLORS } from "../../utils/constants";
-import AudioPlayer from "../Audio/AudioPlayer";
+import SimpleAudioPlayer from "../Audio/AudioPlayer";
 import "./SoundMap.css";
 
-// Configurar iconos de Leaflet
+// Configurar iconos de Leaflet - CORREGIDO
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: require("leaflet/dist/images/marker-icon-2x.png"),
@@ -50,33 +50,34 @@ function MapEventHandler({ onLocationSelect, showLocationSelector }) {
   ) : null;
 }
 
-// Crear icono personalizado basado en emoción - Optimizado
-const createEmotionIcon = (emotion) => {
-  const color = EMOTION_COLORS[emotion] || "#666";
+// Crear icono simple pero visible
+const createSoundIcon = (emotion) => {
+  const color = EMOTION_COLORS[emotion] || "#4f46e5";
 
   return L.divIcon({
-    className: "custom-marker",
+    className: "custom-sound-marker",
     html: `
       <div style="
         background-color: ${color};
-        width: 20px;
-        height: 20px;
+        width: 24px;
+        height: 24px;
         border-radius: 50%;
-        border: 2px solid white;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        border: 3px solid white;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.4);
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 10px;
+        font-size: 12px;
         color: white;
         font-weight: bold;
+        position: relative;
       ">
         🎵
       </div>
     `,
-    iconSize: [24, 24],
-    iconAnchor: [12, 12],
-    popupAnchor: [0, -12],
+    iconSize: [30, 30],
+    iconAnchor: [15, 15],
+    popupAnchor: [0, -15],
   });
 };
 
@@ -91,26 +92,75 @@ const SoundMap = ({
 }) => {
   const [selectedSound, setSelectedSound] = useState(null);
   const [mapSounds, setMapSounds] = useState([]);
+  const [mapCenter, setMapCenter] = useState(center);
+  const [mapZoom, setMapZoom] = useState(zoom);
   const mapRef = useRef();
-  const [mapReady, setMapReady] = useState(false);
 
   useEffect(() => {
-    // Filtrar sonidos válidos
-    const validSounds = sounds.filter(
-      (sound) =>
+    console.log("🗺️ SoundMap recibió sonidos:", sounds?.length || 0);
+
+    // Validar y filtrar sonidos
+    const validSounds = (sounds || []).filter((sound) => {
+      const isValid =
         sound &&
+        sound._id &&
         sound.ubicacion &&
         sound.ubicacion.coordinates &&
         Array.isArray(sound.ubicacion.coordinates) &&
         sound.ubicacion.coordinates.length === 2 &&
         typeof sound.ubicacion.coordinates[0] === "number" &&
-        typeof sound.ubicacion.coordinates[1] === "number"
+        typeof sound.ubicacion.coordinates[1] === "number" &&
+        !isNaN(sound.ubicacion.coordinates[0]) &&
+        !isNaN(sound.ubicacion.coordinates[1]);
+
+      if (!isValid) {
+        console.warn("🗺️ Sonido inválido para mapa:", sound);
+      }
+
+      return isValid;
+    });
+
+    console.log(
+      `🗺️ Sonidos válidos para mapa: ${validSounds.length}/${
+        sounds?.length || 0
+      }`
     );
 
     setMapSounds(validSounds);
+
+    // Ajustar vista del mapa si hay sonidos
+    if (validSounds.length > 0) {
+      // Calcular centro basado en los sonidos
+      const lats = validSounds.map((s) => s.ubicacion.coordinates[1]);
+      const lngs = validSounds.map((s) => s.ubicacion.coordinates[0]);
+
+      const centerLat = lats.reduce((a, b) => a + b, 0) / lats.length;
+      const centerLng = lngs.reduce((a, b) => a + b, 0) / lngs.length;
+
+      console.log(`🗺️ Centro calculado: [${centerLat}, ${centerLng}]`);
+
+      setMapCenter([centerLat, centerLng]);
+
+      // Si hay varios sonidos, ajustar zoom para mostrar todos
+      if (validSounds.length > 1) {
+        const latRange = Math.max(...lats) - Math.min(...lats);
+        const lngRange = Math.max(...lngs) - Math.min(...lngs);
+        const maxRange = Math.max(latRange, lngRange);
+
+        // Calcular zoom apropiado
+        let newZoom = 10;
+        if (maxRange < 0.01) newZoom = 15;
+        else if (maxRange < 0.1) newZoom = 12;
+        else if (maxRange < 1) newZoom = 8;
+        else newZoom = 6;
+
+        setMapZoom(newZoom);
+      }
+    }
   }, [sounds]);
 
   const handleMarkerClick = (sound) => {
+    console.log("🗺️ Marcador clickeado:", sound.nombre);
     setSelectedSound(sound);
     if (onSoundSelect) {
       onSoundSelect(sound);
@@ -121,6 +171,7 @@ const SoundMap = ({
     if (!mapRef.current) return;
 
     try {
+      console.log("🗺️ Cargando sonidos del área...");
       const map = mapRef.current;
       const bounds = map.getBounds();
       const center = bounds.getCenter();
@@ -132,41 +183,36 @@ const SoundMap = ({
       );
 
       if (response.data.success) {
+        console.log(
+          `🗺️ Sonidos del área cargados: ${response.data.data.length}`
+        );
         setMapSounds(response.data.data);
       }
     } catch (error) {
-      console.error("Error cargando sonidos del área:", error);
+      console.error("🗺️ Error cargando sonidos del área:", error);
     }
   };
 
-  // Renderizar marcadores de forma más segura
+  // Renderizar marcadores con mejor logging
   const renderMarkers = () => {
-    return mapSounds.map((sound) => {
+    console.log(`🗺️ Renderizando ${mapSounds.length} marcadores`);
+
+    return mapSounds.map((sound, index) => {
       try {
-        // Validación adicional
         if (!sound._id || !sound.ubicacion || !sound.ubicacion.coordinates) {
+          console.warn(`🗺️ Sonido ${index} sin datos válidos:`, sound);
           return null;
         }
 
         const coordinates = sound.ubicacion.coordinates;
         const position = [coordinates[1], coordinates[0]]; // [lat, lng]
 
-        // Validar coordenadas
-        if (!Array.isArray(position) || position.length !== 2) {
-          console.warn("Coordenadas inválidas para sonido:", sound._id);
-          return null;
-        }
-
-        if (
-          typeof position[0] !== "number" ||
-          typeof position[1] !== "number"
-        ) {
-          console.warn("Coordenadas no numéricas para sonido:", sound._id);
-          return null;
-        }
+        console.log(
+          `🗺️ Marcador ${index}: ${sound.nombre} en [${position[0]}, ${position[1]}]`
+        );
 
         const primaryEmotion = sound.emociones?.[0] || "neutral";
-        const icon = createEmotionIcon(primaryEmotion);
+        const icon = createSoundIcon(primaryEmotion);
 
         return (
           <Marker
@@ -209,15 +255,9 @@ const SoundMap = ({
                   </p>
                 )}
 
-                {sound.etiquetas && sound.etiquetas.length > 0 && (
-                  <div className="tags">
-                    <strong>Etiquetas:</strong> {sound.etiquetas.join(", ")}
-                  </div>
-                )}
-
                 {sound.audio_url && (
                   <div className="audio-player-container">
-                    <AudioPlayer
+                    <SimpleAudioPlayer
                       audioUrl={`${APP_CONFIG.UPLOADS_URL}${sound.audio_url}`}
                       title={sound.nombre}
                       compact={true}
@@ -229,6 +269,14 @@ const SoundMap = ({
                   <button
                     onClick={() => handleMarkerClick(sound)}
                     className="btn-primary"
+                    style={{
+                      background: "#4f46e5",
+                      color: "white",
+                      border: "none",
+                      padding: "4px 8px",
+                      borderRadius: "4px",
+                      cursor: "pointer",
+                    }}
                   >
                     Ver detalles
                   </button>
@@ -238,7 +286,7 @@ const SoundMap = ({
           </Marker>
         );
       } catch (error) {
-        console.error("Error renderizando marcador:", error);
+        console.error(`🗺️ Error renderizando marcador ${index}:`, error);
         return null;
       }
     });
@@ -247,11 +295,11 @@ const SoundMap = ({
   return (
     <div className="sound-map-container" style={{ height }}>
       <MapContainer
-        center={center}
-        zoom={zoom}
+        center={mapCenter}
+        zoom={mapZoom}
         style={{ height: "100%", width: "100%" }}
         ref={mapRef}
-        whenCreated={() => setMapReady(true)}
+        key={`${mapCenter[0]}-${mapCenter[1]}-${mapZoom}`} // Forzar re-render cuando cambie centro/zoom
       >
         <TileLayer
           url={MAP_CONFIG.tileLayer}
@@ -266,8 +314,8 @@ const SoundMap = ({
           />
         )}
 
-        {/* Marcadores de sonidos - Solo renderizar cuando el mapa esté listo */}
-        {mapReady && renderMarkers()}
+        {/* Marcadores de sonidos */}
+        {renderMarkers()}
       </MapContainer>
 
       {/* Controles del mapa */}
@@ -276,11 +324,47 @@ const SoundMap = ({
           onClick={handleLoadSoundsInArea}
           className="btn-secondary"
           title="Cargar sonidos en esta área"
+          style={{
+            background: "white",
+            border: "1px solid #ccc",
+            padding: "4px 8px",
+            borderRadius: "4px",
+            cursor: "pointer",
+          }}
         >
-          🔄 Cargar sonidos del área
+          🔄 Cargar área
         </button>
 
-        <div className="map-info">Sonidos mostrados: {mapSounds.length}</div>
+        <div
+          className="map-info"
+          style={{
+            background: "white",
+            padding: "4px 8px",
+            borderRadius: "4px",
+            border: "1px solid #ccc",
+            fontSize: "12px",
+          }}
+        >
+          Sonidos: {mapSounds.length}
+        </div>
+      </div>
+
+      {/* Debug info */}
+      <div
+        style={{
+          position: "absolute",
+          bottom: "10px",
+          left: "10px",
+          background: "rgba(0,0,0,0.7)",
+          color: "white",
+          padding: "4px 8px",
+          borderRadius: "4px",
+          fontSize: "10px",
+          zIndex: 1000,
+        }}
+      >
+        Centro: [{mapCenter[0].toFixed(3)}, {mapCenter[1].toFixed(3)}] | Zoom:{" "}
+        {mapZoom} | Sonidos: {mapSounds.length}
       </div>
     </div>
   );

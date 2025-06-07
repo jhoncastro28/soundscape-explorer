@@ -49,17 +49,46 @@ const Navigation = () => {
 
 // Página de inicio
 const HomePage = ({ sounds, onSoundSelect }) => {
+  console.log("🏠 HomePage renderizado con sonidos:", sounds?.length || 0);
   const [featuredSounds, setFeaturedSounds] = useState([]);
   const [recentSounds, setRecentSounds] = useState([]);
 
+  // Función debugState local para HomePage
+  const debugState = () => {
+    console.log("🔍 Estado actual de HomePage:");
+    console.log("   - sounds recibidos:", sounds?.length || 0);
+    console.log("   - featuredSounds:", featuredSounds.length);
+    console.log("   - recentSounds:", recentSounds.length);
+    console.log("   - sounds completos:", sounds);
+  };
+
   useEffect(() => {
-    // Obtener sonidos destacados (últimos 6)
-    setRecentSounds(sounds.slice(0, 6));
-    setFeaturedSounds(sounds.slice(0, 3));
+    console.log("🏠 HomePage useEffect - sounds cambió:", sounds?.length || 0);
+
+    if (sounds && sounds.length > 0) {
+      const recent = sounds.slice(0, 6);
+      const featured = sounds.slice(0, 3);
+
+      console.log("📊 Recent sounds:", recent.length);
+      console.log("⭐ Featured sounds:", featured.length);
+
+      setRecentSounds(recent);
+      setFeaturedSounds(featured);
+    } else {
+      console.log("⚠️ No hay sonidos para mostrar");
+      setRecentSounds([]);
+      setFeaturedSounds([]);
+    }
   }, [sounds]);
+
+  // Log al renderizar
+  console.log("🎨 Renderizando HomePage con:");
+  console.log("   - featuredSounds:", featuredSounds.length);
+  console.log("   - recentSounds:", recentSounds.length);
 
   return (
     <div className="home-page">
+
       <header className="hero-section">
         <div className="hero-content">
           <h1>Descubre los Paisajes Sonoros del Mundo</h1>
@@ -79,86 +108,118 @@ const HomePage = ({ sounds, onSoundSelect }) => {
         </div>
       </header>
 
+      {/* Sección de sonidos destacados - CORREGIDA (eliminé duplicación) */}
       <section className="featured-section">
         <h2>Sonidos Destacados</h2>
-        <div className="sounds-grid">
-          {featuredSounds.map((sound) => (
-            <div key={sound._id} className="sound-card featured">
-              <h3>{sound.nombre}</h3>
-              <p className="author">Por: {sound.autor}</p>
+        {featuredSounds.length > 0 ? (
+          <div className="sounds-grid">
+            {featuredSounds.map((sound) => (
+              <div key={sound._id} className="sound-card featured">
+                <h3>{sound.nombre}</h3>
+                <p className="author">Por: {sound.autor}</p>
 
-              {sound.emociones && sound.emociones.length > 0 && (
-                <div className="emotions">
-                  {sound.emociones.slice(0, 3).map((emotion, index) => (
-                    <span key={index} className="emotion-tag">
-                      {emotion}
-                    </span>
-                  ))}
-                </div>
-              )}
+                {sound.emociones && sound.emociones.length > 0 && (
+                  <div className="emotions">
+                    {sound.emociones.slice(0, 3).map((emotion, index) => (
+                      <span key={index} className="emotion-tag">
+                        {emotion}
+                      </span>
+                    ))}
+                  </div>
+                )}
 
-              <p className="description">
-                {sound.descripcion?.substring(0, 100)}
-                {sound.descripcion?.length > 100 && "..."}
-              </p>
+                <p className="description">
+                  {sound.descripcion?.substring(0, 100)}
+                  {sound.descripcion?.length > 100 && "..."}
+                </p>
 
-              {sound.audio_url && (
-                <AudioPlayer
-                  audioUrl={`${APP_CONFIG.UPLOADS_URL}${sound.audio_url}`}
-                  title={sound.nombre}
-                  compact={true}
-                />
-              )}
+                {sound.audio_url && (
+                  <AudioPlayer
+                    audioUrl={`${APP_CONFIG.UPLOADS_URL}${sound.audio_url}`}
+                    title={sound.nombre}
+                    compact={true}
+                  />
+                )}
 
-              <button
-                onClick={() => onSoundSelect(sound)}
-                className="btn-primary small"
-              >
-                Ver detalles
-              </button>
-            </div>
-          ))}
-        </div>
+                <button
+                  onClick={() => onSoundSelect(sound)}
+                  className="btn-primary small"
+                >
+                  Ver detalles
+                </button>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div style={{ padding: "20px", textAlign: "center", color: "#666" }}>
+            <p>⚠️ No hay sonidos destacados para mostrar</p>
+            <p>Estado: {sounds?.length || 0} sonidos cargados</p>
+            <button
+              onClick={debugState}
+              style={{
+                background: "#f59e0b",
+                color: "white",
+                border: "none",
+                padding: "8px 16px",
+                borderRadius: "4px",
+                cursor: "pointer",
+                marginTop: "10px",
+              }}
+            >
+              🔍 Debug Estado
+            </button>
+          </div>
+        )}
       </section>
 
       <section className="recent-section">
         <h2>Sonidos Recientes</h2>
-        <div className="sounds-list">
-          {recentSounds.map((sound) => (
-            <div key={sound._id} className="sound-item">
-              <div className="sound-info">
-                <h4>{sound.nombre}</h4>
-                <p>Por: {sound.autor}</p>
-                <span className="date">
-                  {new Date(sound.fecha).toLocaleDateString()}
-                </span>
-              </div>
+        {recentSounds.length > 0 ? (
+          <div className="sounds-list">
+            {recentSounds.map((sound) => (
+              <div key={sound._id} className="sound-item">
+                <div className="sound-info">
+                  <h4>{sound.nombre}</h4>
+                  <p>Por: {sound.autor}</p>
+                  <span className="date">
+                    {new Date(sound.fecha).toLocaleDateString()}
+                  </span>
+                </div>
 
-              <div className="sound-actions">
-                <button
-                  onClick={() => onSoundSelect(sound)}
-                  className="btn-secondary small"
-                >
-                  Escuchar
-                </button>
+                <div className="sound-actions">
+                  <button
+                    onClick={() => onSoundSelect(sound)}
+                    className="btn-secondary small"
+                  >
+                    Escuchar
+                  </button>
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        ) : (
+          <div style={{ padding: "20px", textAlign: "center", color: "#666" }}>
+            <p>⚠️ No hay sonidos recientes para mostrar</p>
+          </div>
+        )}
       </section>
 
       <section className="stats-section">
         <div className="stats-grid">
           <div className="stat-card">
-            <h3>{sounds.length}</h3>
+            <h3>{sounds?.length || 0}</h3>
             <p>Sonidos Totales</p>
           </div>
           <div className="stat-card">
-            <h3>{new Set(sounds.map((s) => s.autor)).size}</h3>
+            <h3>{sounds ? new Set(sounds.map((s) => s.autor)).size : 0}</h3>
             <p>Contribuyentes</p>
           </div>
           <div className="stat-card">
-            <h3>{new Set(sounds.flatMap((s) => s.emociones || [])).size}</h3>
+            <h3>
+              {sounds
+                ? new Set(sounds.flatMap((s) => s.emociones || [])).size
+                : 0}
+            </h3>
             <p>Emociones Únicas</p>
           </div>
         </div>
@@ -169,12 +230,12 @@ const HomePage = ({ sounds, onSoundSelect }) => {
 
 // Página de exploración
 const ExplorePage = ({ sounds, onSoundSelect }) => {
-  const [filteredSounds, setFilteredSounds] = useState(sounds);
+  const [filteredSounds, setFilteredSounds] = useState(sounds || []);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedEmotion, setSelectedEmotion] = useState("");
 
   useEffect(() => {
-    let filtered = sounds;
+    let filtered = sounds || [];
 
     if (searchTerm) {
       filtered = filtered.filter(
@@ -214,13 +275,14 @@ const ExplorePage = ({ sounds, onSoundSelect }) => {
             className="emotion-filter"
           >
             <option value="">Todas las emociones</option>
-            {Array.from(new Set(sounds.flatMap((s) => s.emociones || []))).map(
-              (emotion) => (
-                <option key={emotion} value={emotion}>
-                  {emotion}
-                </option>
-              )
-            )}
+            {sounds &&
+              Array.from(new Set(sounds.flatMap((s) => s.emociones || []))).map(
+                (emotion) => (
+                  <option key={emotion} value={emotion}>
+                    {emotion}
+                  </option>
+                )
+              )}
           </select>
         </div>
       </div>
@@ -291,6 +353,14 @@ const AnalyticsPage = ({ sounds }) => {
   const [generalStats, setGeneralStats] = useState({});
 
   const calculateAnalytics = () => {
+    if (!sounds || sounds.length === 0) {
+      setEmotionStats([]);
+      setLocationStats([]);
+      setTimelineData([]);
+      setGeneralStats({});
+      return;
+    }
+
     // Calcular estadísticas de emociones
     const emotions = {};
     sounds.forEach((sound) => {
@@ -309,10 +379,12 @@ const AnalyticsPage = ({ sounds }) => {
     // Calcular estadísticas de ubicación (agrupadas por región)
     const locations = {};
     sounds.forEach((sound) => {
-      const lat = Math.round(sound.ubicacion.coordinates[1]);
-      const lng = Math.round(sound.ubicacion.coordinates[0]);
-      const key = `${lat},${lng}`;
-      locations[key] = (locations[key] || 0) + 1;
+      if (sound.ubicacion && sound.ubicacion.coordinates) {
+        const lat = Math.round(sound.ubicacion.coordinates[1]);
+        const lng = Math.round(sound.ubicacion.coordinates[0]);
+        const key = `${lat},${lng}`;
+        locations[key] = (locations[key] || 0) + 1;
+      }
     });
 
     const locationData = Object.entries(locations)
@@ -328,7 +400,7 @@ const AnalyticsPage = ({ sounds }) => {
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
     sounds
-      .filter((sound) => new Date(sound.fecha) >= thirtyDaysAgo)
+      .filter((sound) => sound.fecha && new Date(sound.fecha) >= thirtyDaysAgo)
       .forEach((sound) => {
         const date = new Date(sound.fecha).toISOString().split("T")[0];
         timeline[date] = (timeline[date] || 0) + 1;
@@ -375,7 +447,7 @@ const AnalyticsPage = ({ sounds }) => {
           <div className="stat-card">
             <div className="stat-icon">🎵</div>
             <div className="stat-content">
-              <h3>{generalStats.totalSounds}</h3>
+              <h3>{generalStats.totalSounds || 0}</h3>
               <p>Sonidos Totales</p>
             </div>
           </div>
@@ -383,7 +455,7 @@ const AnalyticsPage = ({ sounds }) => {
           <div className="stat-card">
             <div className="stat-icon">👥</div>
             <div className="stat-content">
-              <h3>{generalStats.uniqueAuthors}</h3>
+              <h3>{generalStats.uniqueAuthors || 0}</h3>
               <p>Contribuyentes</p>
             </div>
           </div>
@@ -391,7 +463,7 @@ const AnalyticsPage = ({ sounds }) => {
           <div className="stat-card">
             <div className="stat-icon">💭</div>
             <div className="stat-content">
-              <h3>{generalStats.uniqueEmotions}</h3>
+              <h3>{generalStats.uniqueEmotions || 0}</h3>
               <p>Emociones Únicas</p>
             </div>
           </div>
@@ -411,29 +483,33 @@ const AnalyticsPage = ({ sounds }) => {
         <div className="analytics-card">
           <h3>🎭 Emociones Más Populares</h3>
           <div className="emotion-chart">
-            {emotionStats.map(({ emotion, count }, index) => {
-              const maxCount = emotionStats[0]?.count || 1;
-              const percentage = (count / maxCount) * 100;
+            {emotionStats.length > 0 ? (
+              emotionStats.map(({ emotion, count }, index) => {
+                const maxCount = emotionStats[0]?.count || 1;
+                const percentage = (count / maxCount) * 100;
 
-              return (
-                <div key={emotion} className="emotion-bar">
-                  <div className="emotion-info">
-                    <span className="emotion-name">{emotion}</span>
-                    <span className="emotion-count">{count}</span>
+                return (
+                  <div key={emotion} className="emotion-bar">
+                    <div className="emotion-info">
+                      <span className="emotion-name">{emotion}</span>
+                      <span className="emotion-count">{count}</span>
+                    </div>
+                    <div className="bar-container">
+                      <div
+                        className="bar"
+                        style={{
+                          width: `${percentage}%`,
+                          backgroundColor: getEmotionColor(emotion),
+                          animationDelay: `${index * 0.1}s`,
+                        }}
+                      />
+                    </div>
                   </div>
-                  <div className="bar-container">
-                    <div
-                      className="bar"
-                      style={{
-                        width: `${percentage}%`,
-                        backgroundColor: getEmotionColor(emotion),
-                        animationDelay: `${index * 0.1}s`,
-                      }}
-                    />
-                  </div>
-                </div>
-              );
-            })}
+                );
+              })
+            ) : (
+              <p>No hay datos de emociones disponibles</p>
+            )}
           </div>
         </div>
 
@@ -441,12 +517,16 @@ const AnalyticsPage = ({ sounds }) => {
         <div className="analytics-card">
           <h3>📍 Ubicaciones Más Activas</h3>
           <div className="location-chart">
-            {locationStats.map(({ location, count }) => (
-              <div key={location} className="location-item">
-                <span className="location-name">📍 {location}</span>
-                <span className="count">{count} sonidos</span>
-              </div>
-            ))}
+            {locationStats.length > 0 ? (
+              locationStats.map(({ location, count }) => (
+                <div key={location} className="location-item">
+                  <span className="location-name">📍 {location}</span>
+                  <span className="count">{count} sonidos</span>
+                </div>
+              ))
+            ) : (
+              <p>No hay datos de ubicación disponibles</p>
+            )}
           </div>
         </div>
 
@@ -496,7 +576,8 @@ const AnalyticsPage = ({ sounds }) => {
               <strong>Sonidos por autor:</strong>
               <span>
                 {(
-                  generalStats.totalSounds / (generalStats.uniqueAuthors || 1)
+                  (generalStats.totalSounds || 0) /
+                  (generalStats.uniqueAuthors || 1)
                 ).toFixed(1)}
               </span>
             </div>
@@ -504,7 +585,8 @@ const AnalyticsPage = ({ sounds }) => {
               <strong>Emociones por sonido:</strong>
               <span>
                 {(
-                  generalStats.uniqueEmotions / (generalStats.totalSounds || 1)
+                  (generalStats.uniqueEmotions || 0) /
+                  (generalStats.totalSounds || 1)
                 ).toFixed(1)}
               </span>
             </div>
@@ -521,7 +603,7 @@ const AnalyticsPage = ({ sounds }) => {
       </div>
 
       {/* Sección de insights */}
-      {sounds.length > 0 && (
+      {sounds && sounds.length > 0 && (
         <section className="insights-section">
           <h3>🔍 Insights</h3>
           <div className="insights-grid">
@@ -537,7 +619,7 @@ const AnalyticsPage = ({ sounds }) => {
               <h4>Diversidad Emocional</h4>
               <p>
                 El mapa sonoro cubre{" "}
-                <strong>{generalStats.uniqueEmotions}</strong> emociones
+                <strong>{generalStats.uniqueEmotions || 0}</strong> emociones
                 diferentes, mostrando gran diversidad.
               </p>
             </div>
@@ -545,7 +627,7 @@ const AnalyticsPage = ({ sounds }) => {
             <div className="insight-card">
               <h4>Participación</h4>
               <p>
-                <strong>{generalStats.uniqueAuthors}</strong> personas han
+                <strong>{generalStats.uniqueAuthors || 0}</strong> personas han
                 contribuido al proyecto hasta ahora.
               </p>
             </div>
@@ -651,20 +733,92 @@ function App() {
 
   const loadSounds = async () => {
     try {
+      console.log("🔄 Iniciando carga de sonidos...");
       setIsLoading(true);
+
       const response = await soundsAPI.getAllSounds({ limit: 100 });
 
-      if (response.data.success) {
-        setSounds(response.data.data);
-        setError(null);
+      console.log("📥 Respuesta recibida:", response);
+      console.log("📊 Status:", response.status);
+      console.log("📋 Data completa:", response.data);
+
+      if (response.data && response.data.success) {
+        const soundsData = response.data.data;
+        console.log("🎵 Sonidos extraídos:", soundsData);
+        console.log(
+          "📊 Cantidad de sonidos:",
+          soundsData ? soundsData.length : 0
+        );
+
+        if (soundsData && Array.isArray(soundsData)) {
+          console.log("✅ Sonidos válidos, actualizando estado...");
+
+          // Validar cada sonido antes de agregarlo
+          const validSounds = soundsData.filter((sound, index) => {
+            const isValid =
+              sound &&
+              sound._id &&
+              sound.nombre &&
+              sound.ubicacion &&
+              sound.ubicacion.coordinates &&
+              Array.isArray(sound.ubicacion.coordinates) &&
+              sound.ubicacion.coordinates.length === 2;
+
+            if (!isValid) {
+              console.warn(`⚠️ Sonido inválido en posición ${index}:`, sound);
+            }
+
+            return isValid;
+          });
+
+          console.log(
+            `✅ ${validSounds.length}/${soundsData.length} sonidos válidos`
+          );
+
+          setSounds(validSounds);
+          setError(null);
+
+          // Log de éxito
+          console.log("🎉 Estado actualizado con sonidos:", validSounds);
+        } else {
+          console.warn("⚠️ soundsData no es un array válido:", soundsData);
+          setSounds([]);
+        }
+      } else {
+        console.error("❌ Respuesta no exitosa:", response.data);
+        setError("No se pudieron cargar los sonidos");
       }
     } catch (error) {
-      console.error("Error cargando sonidos:", error);
+      console.error("💥 Error cargando sonidos:", error);
+      console.error("📋 Error completo:", {
+        message: error.message,
+        stack: error.stack,
+        response: error.response?.data,
+      });
       setError(MESSAGES.errors.networkError);
     } finally {
       setIsLoading(false);
+      console.log("🏁 Carga de sonidos finalizada");
     }
   };
+
+  // Debug function para App
+  const debugMainState = () => {
+    console.log("🔍 Estado principal de App:");
+    console.log("   - isLoading:", isLoading);
+    console.log("   - error:", error);
+    console.log("   - sounds:", sounds);
+    console.log("   - sounds.length:", sounds.length);
+    console.log("   - connectionStatus:", connectionStatus);
+  };
+
+  useEffect(() => {
+    console.log("🔄 Estado 'sounds' cambió:", sounds);
+    console.log("📊 Cantidad:", sounds.length);
+    if (sounds.length > 0) {
+      console.log("🎵 Primer sonido:", sounds[0]);
+    }
+  }, [sounds]);
 
   const handleSoundCreated = (newSound) => {
     setSounds((prev) => [newSound, ...prev]);
@@ -678,6 +832,11 @@ function App() {
   const closeModal = () => {
     setSelectedSound(null);
   };
+
+  // Agregar debugMainState al objeto window para acceso global
+  useEffect(() => {
+    window.debugSoundScape = debugMainState;
+  }, [isLoading, error, sounds, connectionStatus]);
 
   // Mostrar pantalla de carga
   if (isLoading) {
@@ -700,6 +859,13 @@ function App() {
           <p>{error}</p>
           <button onClick={checkConnection} className="btn-primary">
             Reintentar
+          </button>
+          <button
+            onClick={debugMainState}
+            className="btn-secondary"
+            style={{ marginLeft: "10px" }}
+          >
+            🔍 Debug
           </button>
         </div>
       </div>
