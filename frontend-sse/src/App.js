@@ -11,6 +11,7 @@ import { soundsAPI, healthCheck } from "./services/api";
 import SoundMap from "./components/Map/SoundMap";
 import SoundForm from "./components/Forms/SoundForm";
 import AudioPlayer from "./components/Audio/AudioPlayer";
+import Analytics from "./components/Analytics/Analytics"; // ← IMPORTACIÓN AGREGADA
 import { APP_CONFIG, MESSAGES } from "./utils/constants";
 import "./App.css";
 
@@ -345,297 +346,25 @@ const UploadPage = ({ onSoundCreated }) => {
   );
 };
 
-// Página de análisis
+// Página de análisis - COMPLETAMENTE REEMPLAZADA
 const AnalyticsPage = ({ sounds }) => {
-  const [emotionStats, setEmotionStats] = useState([]);
-  const [locationStats, setLocationStats] = useState([]);
-  const [timelineData, setTimelineData] = useState([]);
-  const [generalStats, setGeneralStats] = useState({});
+  // Adaptar los datos al formato esperado por el componente Analytics
+  const adaptedSounds = sounds ? sounds.map(sound => ({
+    // Adaptar la estructura de datos de tu API al formato del componente
+    author: sound.autor,
+    emotions: sound.emociones || [],
+    location: sound.ubicacion?.coordinates ? 
+      `${sound.ubicacion.coordinates[1].toFixed(2)}, ${sound.ubicacion.coordinates[0].toFixed(2)}` : 
+      'Ubicación desconocida',
+    duration: sound.duracion || 30, // valor por defecto si no hay duración
+    createdAt: sound.fecha,
+    // Mantener datos originales por si acaso
+    _id: sound._id,
+    nombre: sound.nombre,
+    descripcion: sound.descripcion
+  })) : [];
 
-  const calculateAnalytics = () => {
-    if (!sounds || sounds.length === 0) {
-      setEmotionStats([]);
-      setLocationStats([]);
-      setTimelineData([]);
-      setGeneralStats({});
-      return;
-    }
-
-    // Calcular estadísticas de emociones
-    const emotions = {};
-    sounds.forEach((sound) => {
-      sound.emociones?.forEach((emotion) => {
-        emotions[emotion] = (emotions[emotion] || 0) + 1;
-      });
-    });
-
-    const emotionData = Object.entries(emotions)
-      .map(([emotion, count]) => ({ emotion, count }))
-      .sort((a, b) => b.count - a.count)
-      .slice(0, 10);
-
-    setEmotionStats(emotionData);
-
-    // Calcular estadísticas de ubicación (agrupadas por región)
-    const locations = {};
-    sounds.forEach((sound) => {
-      if (sound.ubicacion && sound.ubicacion.coordinates) {
-        const lat = Math.round(sound.ubicacion.coordinates[1]);
-        const lng = Math.round(sound.ubicacion.coordinates[0]);
-        const key = `${lat},${lng}`;
-        locations[key] = (locations[key] || 0) + 1;
-      }
-    });
-
-    const locationData = Object.entries(locations)
-      .map(([location, count]) => ({ location, count }))
-      .sort((a, b) => b.count - a.count)
-      .slice(0, 8);
-
-    setLocationStats(locationData);
-
-    // Calcular datos de timeline (últimos 30 días)
-    const timeline = {};
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-
-    sounds
-      .filter((sound) => sound.fecha && new Date(sound.fecha) >= thirtyDaysAgo)
-      .forEach((sound) => {
-        const date = new Date(sound.fecha).toISOString().split("T")[0];
-        timeline[date] = (timeline[date] || 0) + 1;
-      });
-
-    const timelineArray = Object.entries(timeline)
-      .map(([date, count]) => ({ date, count }))
-      .sort((a, b) => new Date(a.date) - new Date(b.date));
-
-    setTimelineData(timelineArray);
-
-    // Calcular estadísticas generales
-    const totalDuration = sounds.reduce(
-      (sum, sound) => sum + (sound.duracion || 0),
-      0
-    );
-    const uniqueAuthors = new Set(sounds.map((s) => s.autor)).size;
-    const uniqueEmotions = new Set(sounds.flatMap((s) => s.emociones || []))
-      .size;
-    const averageDuration =
-      sounds.length > 0 ? totalDuration / sounds.length : 0;
-
-    setGeneralStats({
-      totalSounds: sounds.length,
-      uniqueAuthors,
-      uniqueEmotions,
-      totalDuration,
-      averageDuration,
-      lastUpload: sounds[0] ? new Date(sounds[0].fecha) : null,
-    });
-  };
-
-  useEffect(() => {
-    calculateAnalytics();
-  }, [sounds]);
-
-  return (
-    <div className="analytics-page">
-      <h1>📊 Análisis de Paisajes Sonoros</h1>
-
-      {/* Estadísticas generales */}
-      <section className="stats-overview">
-        <div className="stats-grid">
-          <div className="stat-card">
-            <div className="stat-icon">🎵</div>
-            <div className="stat-content">
-              <h3>{generalStats.totalSounds || 0}</h3>
-              <p>Sonidos Totales</p>
-            </div>
-          </div>
-
-          <div className="stat-card">
-            <div className="stat-icon">👥</div>
-            <div className="stat-content">
-              <h3>{generalStats.uniqueAuthors || 0}</h3>
-              <p>Contribuyentes</p>
-            </div>
-          </div>
-
-          <div className="stat-card">
-            <div className="stat-icon">💭</div>
-            <div className="stat-content">
-              <h3>{generalStats.uniqueEmotions || 0}</h3>
-              <p>Emociones Únicas</p>
-            </div>
-          </div>
-
-          <div className="stat-card">
-            <div className="stat-icon">⏱️</div>
-            <div className="stat-content">
-              <h3>{Math.round((generalStats.totalDuration || 0) / 60)}</h3>
-              <p>Minutos Totales</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <div className="analytics-grid">
-        {/* Gráfico de emociones */}
-        <div className="analytics-card">
-          <h3>🎭 Emociones Más Populares</h3>
-          <div className="emotion-chart">
-            {emotionStats.length > 0 ? (
-              emotionStats.map(({ emotion, count }, index) => {
-                const maxCount = emotionStats[0]?.count || 1;
-                const percentage = (count / maxCount) * 100;
-
-                return (
-                  <div key={emotion} className="emotion-bar">
-                    <div className="emotion-info">
-                      <span className="emotion-name">{emotion}</span>
-                      <span className="emotion-count">{count}</span>
-                    </div>
-                    <div className="bar-container">
-                      <div
-                        className="bar"
-                        style={{
-                          width: `${percentage}%`,
-                          backgroundColor: getEmotionColor(emotion),
-                          animationDelay: `${index * 0.1}s`,
-                        }}
-                      />
-                    </div>
-                  </div>
-                );
-              })
-            ) : (
-              <p>No hay datos de emociones disponibles</p>
-            )}
-          </div>
-        </div>
-
-        {/* Ubicaciones más activas */}
-        <div className="analytics-card">
-          <h3>📍 Ubicaciones Más Activas</h3>
-          <div className="location-chart">
-            {locationStats.length > 0 ? (
-              locationStats.map(({ location, count }) => (
-                <div key={location} className="location-item">
-                  <span className="location-name">📍 {location}</span>
-                  <span className="count">{count} sonidos</span>
-                </div>
-              ))
-            ) : (
-              <p>No hay datos de ubicación disponibles</p>
-            )}
-          </div>
-        </div>
-
-        {/* Timeline de actividad */}
-        <div className="analytics-card timeline-card">
-          <h3>📈 Actividad Reciente (Últimos 30 días)</h3>
-          <div className="timeline-chart">
-            {timelineData.length > 0 ? (
-              <div className="timeline-bars">
-                {timelineData.map(({ date, count }) => {
-                  const maxCount = Math.max(
-                    ...timelineData.map((d) => d.count)
-                  );
-                  const height = (count / maxCount) * 100;
-
-                  return (
-                    <div key={date} className="timeline-bar">
-                      <div
-                        className="bar"
-                        style={{ height: `${height}%` }}
-                        title={`${date}: ${count} sonidos`}
-                      />
-                      <span className="date-label">
-                        {new Date(date).getDate()}
-                      </span>
-                    </div>
-                  );
-                })}
-              </div>
-            ) : (
-              <p className="no-data">No hay datos recientes</p>
-            )}
-          </div>
-        </div>
-
-        {/* Estadísticas adicionales */}
-        <div className="analytics-card">
-          <h3>📋 Estadísticas Detalladas</h3>
-          <div className="detailed-stats">
-            <div className="stat-row">
-              <strong>Duración promedio:</strong>
-              <span>
-                {Math.round(generalStats.averageDuration || 0)} segundos
-              </span>
-            </div>
-            <div className="stat-row">
-              <strong>Sonidos por autor:</strong>
-              <span>
-                {(
-                  (generalStats.totalSounds || 0) /
-                  (generalStats.uniqueAuthors || 1)
-                ).toFixed(1)}
-              </span>
-            </div>
-            <div className="stat-row">
-              <strong>Emociones por sonido:</strong>
-              <span>
-                {(
-                  (generalStats.uniqueEmotions || 0) /
-                  (generalStats.totalSounds || 1)
-                ).toFixed(1)}
-              </span>
-            </div>
-            <div className="stat-row">
-              <strong>Último sonido:</strong>
-              <span>
-                {generalStats.lastUpload
-                  ? new Date(generalStats.lastUpload).toLocaleDateString()
-                  : "N/A"}
-              </span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Sección de insights */}
-      {sounds && sounds.length > 0 && (
-        <section className="insights-section">
-          <h3>🔍 Insights</h3>
-          <div className="insights-grid">
-            <div className="insight-card">
-              <h4>Emoción Dominante</h4>
-              <p>
-                <strong>{emotionStats[0]?.emotion || "N/A"}</strong> es la
-                emoción más común con {emotionStats[0]?.count || 0} sonidos.
-              </p>
-            </div>
-
-            <div className="insight-card">
-              <h4>Diversidad Emocional</h4>
-              <p>
-                El mapa sonoro cubre{" "}
-                <strong>{generalStats.uniqueEmotions || 0}</strong> emociones
-                diferentes, mostrando gran diversidad.
-              </p>
-            </div>
-
-            <div className="insight-card">
-              <h4>Participación</h4>
-              <p>
-                <strong>{generalStats.uniqueAuthors || 0}</strong> personas han
-                contribuido al proyecto hasta ahora.
-              </p>
-            </div>
-          </div>
-        </section>
-      )}
-    </div>
-  );
+  return <Analytics sounds={adaptedSounds} />;
 };
 
 // Modal para detalles de sonido
