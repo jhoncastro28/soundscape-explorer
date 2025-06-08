@@ -1,68 +1,288 @@
 .emotion-chart {
-    background-color: var(--bg-primary);
-    border-radius: var(--border-radius);
-    padding: var(--spacing-lg);
-    box-shadow: var(--box-shadow);
-    margin-bottom: var(--spacing-lg);
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-lg);
+    padding: var(--spacing-3xl);
+    box-shadow: var(--shadow-lg);
+    margin-bottom: var(--spacing-2xl);
+    position: relative;
+    overflow: hidden;
+}
+
+.emotion-chart::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--primary-color) 0%, var(--primary-dark) 100%);
 }
 
 .emotion-chart h3 {
-    font-size: 1.2rem;
-    margin-bottom: var(--spacing-lg);
+    font-size: var(--font-size-2xl);
+    margin-bottom: var(--spacing-3xl);
     color: var(--text-primary);
     text-align: center;
+    font-weight: var(--font-weight-bold);
+    line-height: var(--line-height-tight);
+    position: relative;
+}
+
+.emotion-chart h3::after {
+    content: '';
+    position: absolute;
+    bottom: -var(--spacing-lg);
+    left: 50%;
+    transform: translateX(-50%);
+    width: 60px;
+    height: 3px;
+    background: linear-gradient(90deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+    border-radius: 2px;
 }
 
 .chart-container {
-    space-y: var(--spacing-md);
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xl);
 }
 
 .emotion-bar {
-    margin-bottom: var(--spacing-md);
+    position: relative;
+    background: var(--bg-secondary);
+    border-radius: var(--border-radius-lg);
+    padding: var(--spacing-xl);
+    border: 1px solid var(--border-color);
+    transition: all var(--transition-normal);
+    overflow: hidden;
+}
+
+.emotion-bar:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-xl);
+    border-color: var(--primary-color);
+}
+
+.emotion-bar::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 4px;
+    background: linear-gradient(180deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+    opacity: 0;
+    transition: opacity var(--transition-fast);
+}
+
+.emotion-bar:hover::before {
+    opacity: 1;
 }
 
 .emotion-info {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: var(--spacing-xs);
+    margin-bottom: var(--spacing-lg);
+    position: relative;
+    z-index: 2;
 }
 
 .emotion-name {
-    font-weight: 500;
+    font-weight: var(--font-weight-semibold);
     color: var(--text-primary);
     text-transform: capitalize;
+    font-size: var(--font-size-lg);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+}
+
+.emotion-name::before {
+    content: '💭';
+    font-size: var(--font-size-xl);
 }
 
 .emotion-count {
-    font-weight: 600;
+    font-weight: var(--font-weight-bold);
     color: var(--primary-color);
-    font-family: monospace;
+    font-family: var(--font-family-mono);
+    font-size: var(--font-size-xl);
+    background: var(--primary-light);
+    padding: var(--spacing-sm) var(--spacing-lg);
+    border-radius: var(--border-radius-xl);
+    border: 2px solid rgba(37, 99, 235, 0.2);
+    box-shadow: var(--shadow-sm);
+    min-width: 60px;
+    text-align: center;
 }
 
 .bar-container {
     width: 100%;
-    height: 8px;
-    background-color: var(--bg-tertiary);
-    border-radius: 4px;
+    height: 12px;
+    background: var(--bg-tertiary);
+    border-radius: var(--border-radius);
     overflow: hidden;
+    border: 1px solid var(--border-color);
+    position: relative;
+    box-shadow: var(--shadow-inner);
+}
+
+.bar-container::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(90deg,
+            rgba(37, 99, 235, 0.05) 0%,
+            rgba(99, 102, 241, 0.05) 50%,
+            rgba(168, 85, 247, 0.05) 100%);
 }
 
 .bar {
     height: 100%;
-    background: linear-gradient(90deg, var(--primary-color), var(--primary-hover));
-    border-radius: 4px;
-    transition: width 0.8s ease;
-    animation: growBar 0.8s ease forwards;
+    background: linear-gradient(90deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+    border-radius: var(--border-radius);
+    transition: all var(--transition-slow);
+    animation: growBar 1.2s ease-out forwards;
     width: 0;
+    position: relative;
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.bar::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: -2px;
+    width: 4px;
+    height: 100%;
+    background: var(--bg-primary);
+    border-radius: 2px;
+    box-shadow: var(--shadow-sm);
+}
+
+.emotion-bar:nth-child(even) .bar {
+    background: linear-gradient(90deg, var(--secondary-color) 0%, var(--text-secondary) 100%);
+}
+
+.emotion-bar:nth-child(3n) .bar {
+    background: linear-gradient(90deg, var(--success-color) 0%, #047857 100%);
+}
+
+.emotion-bar:nth-child(4n) .bar {
+    background: linear-gradient(90deg, var(--warning-color) 0%, #b45309 100%);
+}
+
+.emotion-bar:nth-child(5n) .bar {
+    background: linear-gradient(90deg, var(--info-color) 0%, #0e7490 100%);
 }
 
 @keyframes growBar {
     from {
         width: 0;
+        opacity: 0.5;
     }
 
     to {
-        width: var(--final-width);
+        width: var(--final-width, 100%);
+        opacity: 1;
+    }
+}
+
+.emotion-bar:nth-child(1) {
+    animation-delay: 0ms;
+}
+
+.emotion-bar:nth-child(2) {
+    animation-delay: 100ms;
+}
+
+.emotion-bar:nth-child(3) {
+    animation-delay: 200ms;
+}
+
+.emotion-bar:nth-child(4) {
+    animation-delay: 300ms;
+}
+
+.emotion-bar:nth-child(5) {
+    animation-delay: 400ms;
+}
+
+.emotion-bar:nth-child(6) {
+    animation-delay: 500ms;
+}
+
+.emotion-bar:nth-child(7) {
+    animation-delay: 600ms;
+}
+
+.emotion-bar:nth-child(8) {
+    animation-delay: 700ms;
+}
+
+.emotion-percentage {
+    position: absolute;
+    right: var(--spacing-lg);
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: var(--font-size-sm);
+    color: var(--text-secondary);
+    font-weight: var(--font-weight-medium);
+    background: var(--bg-primary);
+    padding: var(--spacing-xs) var(--spacing-sm);
+    border-radius: var(--border-radius);
+    border: 1px solid var(--border-color);
+    box-shadow: var(--shadow-sm);
+}
+
+@media (max-width: 768px) {
+    .emotion-chart {
+        padding: var(--spacing-xl);
+    }
+
+    .emotion-chart h3 {
+        font-size: var(--font-size-xl);
+        margin-bottom: var(--spacing-xl);
+    }
+
+    .emotion-bar {
+        padding: var(--spacing-lg);
+    }
+
+    .emotion-info {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--spacing-md);
+    }
+
+    .emotion-count {
+        align-self: flex-end;
+        font-size: var(--font-size-base);
+    }
+
+    .emotion-name {
+        font-size: var(--font-size-base);
+    }
+
+    .bar-container {
+        height: 10px;
+    }
+}
+
+@media (max-width: 480px) {
+    .emotion-chart {
+        padding: var(--spacing-lg);
+    }
+
+    .chart-container {
+        gap: var(--spacing-lg);
+    }
+
+    .emotion-bar {
+        padding: var(--spacing-md);
     }
 }
