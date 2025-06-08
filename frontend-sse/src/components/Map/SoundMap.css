@@ -1,53 +1,63 @@
-/* Estilos para el componente de mapa */
 .sound-map-container {
     position: relative;
-    border-radius: var(--border-radius);
+    border-radius: var(--border-radius-lg);
     overflow: hidden;
-    box-shadow: var(--box-shadow);
+    box-shadow: var(--shadow-xl);
     border: 1px solid var(--border-color);
+    background: var(--bg-card);
 }
 
-/* Controles del mapa */
+/* Controles del mapa modernos */
 .map-controls {
     position: absolute;
-    top: 10px;
-    right: 10px;
-    z-index: 1000;
+    top: var(--spacing-lg);
+    right: var(--spacing-lg);
+    z-index: var(--z-dropdown);
     display: flex;
     flex-direction: column;
-    gap: var(--spacing-sm);
+    gap: var(--spacing-md);
 }
 
 .map-controls button {
-    background-color: var(--bg-primary);
+    background: var(--bg-card);
+    backdrop-filter: blur(10px);
     border: 1px solid var(--border-color);
     border-radius: var(--border-radius);
-    padding: var(--spacing-sm);
+    padding: var(--spacing-md) var(--spacing-lg);
     cursor: pointer;
-    transition: all 0.2s ease;
-    box-shadow: var(--box-shadow);
-    font-size: 0.875rem;
+    transition: all var(--transition-fast);
+    box-shadow: var(--shadow-lg);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    color: var(--text-primary);
     white-space: nowrap;
+    min-height: 40px;
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
 }
 
 .map-controls button:hover {
-    background-color: var(--primary-color);
-    color: white;
-    transform: translateY(-1px);
-    box-shadow: var(--box-shadow-lg);
+    background: var(--primary-color);
+    color: var(--text-inverse);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-xl);
+    border-color: var(--primary-color);
 }
 
 .map-info {
-    background-color: var(--bg-primary);
+    background: var(--bg-card);
+    backdrop-filter: blur(10px);
     border: 1px solid var(--border-color);
     border-radius: var(--border-radius);
-    padding: var(--spacing-xs) var(--spacing-sm);
-    font-size: 0.8rem;
+    padding: var(--spacing-sm) var(--spacing-md);
+    font-size: var(--font-size-xs);
     color: var(--text-secondary);
-    box-shadow: var(--box-shadow);
+    box-shadow: var(--shadow-lg);
+    font-weight: var(--font-weight-medium);
 }
 
-/* Marcadores personalizados */
+/* Marcadores personalizados mejorados */
 .custom-marker {
     background: transparent;
     border: none;
@@ -58,118 +68,176 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 10px;
     color: white;
-    font-weight: bold;
+    font-weight: var(--font-weight-bold);
     cursor: pointer;
-    transition: transform 0.2s ease;
+    transition: all var(--transition-normal);
+    box-shadow: var(--shadow-lg);
+    border: 3px solid var(--bg-primary);
+    font-size: 12px;
 }
 
 .custom-marker:hover div {
-    transform: scale(1.1);
+    transform: scale(1.2);
+    box-shadow: var(--shadow-xl);
 }
 
-/* Popups de sonidos */
+/* Popups modernos */
 .sound-popup {
-    min-width: 250px;
-    max-width: 350px;
+    min-width: 280px;
+    max-width: 380px;
+    font-family: var(--font-family-sans);
 }
 
 .sound-popup h3 {
-    font-size: 1.1rem;
-    margin-bottom: var(--spacing-sm);
+    font-size: var(--font-size-lg);
+    margin-bottom: var(--spacing-md);
     color: var(--text-primary);
+    font-weight: var(--font-weight-semibold);
+    line-height: var(--line-height-tight);
 }
 
 .sound-popup p {
-    margin-bottom: var(--spacing-xs);
-    font-size: 0.9rem;
+    margin-bottom: var(--spacing-md);
+    font-size: var(--font-size-sm);
     color: var(--text-secondary);
+    line-height: var(--line-height-normal);
 }
 
 .sound-popup strong {
     color: var(--text-primary);
+    font-weight: var(--font-weight-semibold);
 }
 
-/* Emociones en popup */
+/* Emociones en popup modernos */
 .sound-popup .emotions {
-    margin: var(--spacing-sm) 0;
+    margin: var(--spacing-lg) 0;
 }
 
 .sound-popup .emotion-tags {
     display: flex;
     flex-wrap: wrap;
-    gap: var(--spacing-xs);
-    margin-top: var(--spacing-xs);
+    gap: var(--spacing-sm);
+    margin-top: var(--spacing-md);
 }
 
 .sound-popup .emotion-tag {
-    padding: 2px 6px;
-    border-radius: 12px;
-    font-size: 0.75rem;
-    color: white;
-    font-weight: 500;
+    padding: var(--spacing-xs) var(--spacing-md);
+    border-radius: var(--border-radius-xl);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-medium);
+    color: var(--text-inverse);
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+    box-shadow: var(--shadow-sm);
+    transition: all var(--transition-fast);
+}
+
+.sound-popup .emotion-tag:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
 }
 
 /* Etiquetas en popup */
 .sound-popup .tags {
-    margin: var(--spacing-sm) 0;
-    font-size: 0.85rem;
+    margin: var(--spacing-lg) 0;
+    font-size: var(--font-size-sm);
+    color: var(--text-secondary);
 }
 
 /* Reproductor en popup */
 .audio-player-container {
-    margin: var(--spacing-md) 0;
-    background-color: var(--bg-secondary);
+    margin: var(--spacing-lg) 0;
+    background: var(--bg-tertiary);
     border-radius: var(--border-radius);
-    padding: var(--spacing-sm);
+    padding: var(--spacing-lg);
+    border: 1px solid var(--border-color);
 }
 
 /* Acciones del sonido */
 .sound-actions {
-    margin-top: var(--spacing-md);
+    margin-top: var(--spacing-lg);
     display: flex;
     justify-content: flex-end;
-    gap: var(--spacing-sm);
+    gap: var(--spacing-md);
 }
 
 .sound-actions button {
-    padding: var(--spacing-xs) var(--spacing-sm);
-    font-size: 0.875rem;
+    padding: var(--spacing-sm) var(--spacing-lg);
+    font-size: var(--font-size-sm);
+    border-radius: var(--border-radius);
+    border: none;
+    cursor: pointer;
+    font-weight: var(--font-weight-medium);
+    transition: all var(--transition-fast);
+    min-height: 36px;
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+    color: var(--text-inverse);
+    box-shadow: var(--shadow-sm);
 }
 
-/* Estilos específicos para Leaflet */
+.sound-actions button:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+}
+
+/* Estilos específicos para Leaflet mejorados */
 .leaflet-container {
-    font-family: inherit;
+    font-family: var(--font-family-sans);
+    background: var(--bg-secondary);
 }
 
 .leaflet-popup-content-wrapper {
-    border-radius: var(--border-radius);
-    box-shadow: var(--box-shadow-lg);
+    border-radius: var(--border-radius-lg);
+    box-shadow: var(--shadow-2xl);
+    border: 1px solid var(--border-color);
+    background: var(--bg-card);
+    overflow: hidden;
 }
 
 .leaflet-popup-content {
-    margin: var(--spacing-md);
-    line-height: 1.4;
+    margin: var(--spacing-lg);
+    line-height: var(--line-height-normal);
+    color: var(--text-primary);
 }
 
 .leaflet-popup-close-button {
     color: var(--text-secondary);
     font-size: 18px;
-    font-weight: bold;
+    font-weight: var(--font-weight-bold);
+    width: 32px;
+    height: 32px;
+    border-radius: var(--border-radius);
+    transition: all var(--transition-fast);
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .leaflet-popup-close-button:hover {
-    color: var(--text-primary);
+    color: var(--error-color);
+    background: var(--error-light);
 }
 
-/* Tooltip para marcadores */
+.leaflet-popup-tip {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    box-shadow: var(--shadow-lg);
+}
+
+/* Tooltip modernos */
 .leaflet-tooltip {
-    background-color: var(--bg-primary);
+    background: var(--bg-card);
+    backdrop-filter: blur(10px);
     border: 1px solid var(--border-color);
     border-radius: var(--border-radius);
-    box-shadow: var(--box-shadow);
+    box-shadow: var(--shadow-lg);
     color: var(--text-primary);
+    font-weight: var(--font-weight-medium);
+    font-size: var(--font-size-sm);
+    padding: var(--spacing-sm) var(--spacing-md);
 }
 
 .leaflet-tooltip-top:before {
@@ -188,73 +256,43 @@
     border-right-color: var(--border-color);
 }
 
-/* Estados de carga */
+/* Estados de carga modernos */
 .map-loading {
     position: absolute;
     top: 0;
     left: 0;
     right: 0;
     bottom: 0;
-    background-color: rgba(255, 255, 255, 0.8);
+    background: var(--bg-overlay);
+    backdrop-filter: blur(4px);
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 2000;
+    z-index: var(--z-modal);
+    border-radius: var(--border-radius-lg);
 }
 
 .map-loading-spinner {
-    width: 40px;
-    height: 40px;
-    border: 4px solid var(--bg-tertiary);
+    width: 48px;
+    height: 48px;
+    border: 4px solid var(--border-color);
     border-top: 4px solid var(--primary-color);
     border-radius: 50%;
     animation: spin 1s linear infinite;
 }
 
-/* Responsive */
-@media (max-width: 768px) {
-    .map-controls {
-        top: 5px;
-        right: 5px;
-    }
-
-    .map-controls button {
-        padding: var(--spacing-xs);
-        font-size: 0.8rem;
-    }
-
-    .sound-popup {
-        min-width: 200px;
-        max-width: 280px;
-    }
-
-    .sound-popup h3 {
-        font-size: 1rem;
-    }
-
-    .audio-player-container {
-        padding: var(--spacing-xs);
-    }
-
-    .sound-actions {
-        flex-direction: column;
-    }
-
-    .sound-actions button {
-        width: 100%;
-    }
-}
-
 /* Modo de selección de ubicación */
 .sound-map-container.location-selector {
     cursor: crosshair;
+    border-color: var(--primary-color);
+    box-shadow: var(--shadow-glow);
 }
 
 .sound-map-container.location-selector .leaflet-container {
     cursor: crosshair;
 }
 
-/* Animaciones */
+/* Animaciones mejoradas */
 @keyframes markerBounce {
 
     0%,
@@ -266,47 +304,178 @@
     }
 
     40% {
-        transform: translateY(-10px);
+        transform: translateY(-12px);
     }
 
     60% {
-        transform: translateY(-5px);
+        transform: translateY(-6px);
     }
 }
 
 .custom-marker.new-marker div {
-    animation: markerBounce 1s ease infinite;
+    animation: markerBounce 1.5s ease infinite;
 }
 
-/* Clusters de marcadores (si se implementan en el futuro) */
+/* Clusters de marcadores modernos */
 .marker-cluster {
-    background-color: var(--primary-color);
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
     border-radius: 50%;
-    color: white;
+    color: var(--text-inverse);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-weight: bold;
-    border: 2px solid white;
-    box-shadow: var(--box-shadow);
+    font-weight: var(--font-weight-bold);
+    border: 3px solid var(--bg-primary);
+    box-shadow: var(--shadow-lg);
+    transition: all var(--transition-fast);
+}
+
+.marker-cluster:hover {
+    transform: scale(1.1);
+    box-shadow: var(--shadow-xl);
 }
 
 .marker-cluster.small {
-    width: 30px;
-    height: 30px;
-    font-size: 0.8rem;
+    width: 36px;
+    height: 36px;
+    font-size: var(--font-size-sm);
 }
 
 .marker-cluster.medium {
-    width: 40px;
-    height: 40px;
-    font-size: 0.9rem;
-    background-color: var(--warning-color);
+    width: 48px;
+    height: 48px;
+    font-size: var(--font-size-base);
+    background: linear-gradient(135deg, var(--warning-color) 0%, var(--primary-color) 100%);
 }
 
 .marker-cluster.large {
-    width: 50px;
-    height: 50px;
-    font-size: 1rem;
-    background-color: var(--error-color);
+    width: 60px;
+    height: 60px;
+    font-size: var(--font-size-lg);
+    background: linear-gradient(135deg, var(--error-color) 0%, var(--warning-color) 100%);
+}
+
+/* Controles de zoom personalizados */
+.leaflet-control-zoom {
+    border: none;
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-lg);
+    overflow: hidden;
+}
+
+.leaflet-control-zoom a {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    font-weight: var(--font-weight-bold);
+    transition: all var(--transition-fast);
+    border-radius: 0;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.leaflet-control-zoom a:hover {
+    background: var(--primary-color);
+    color: var(--text-inverse);
+    border-color: var(--primary-color);
+}
+
+.leaflet-control-zoom a:first-child {
+    border-radius: var(--border-radius) var(--border-radius) 0 0;
+}
+
+.leaflet-control-zoom a:last-child {
+    border-radius: 0 0 var(--border-radius) var(--border-radius);
+    border-top: none;
+}
+
+/* Attribution modernizada */
+.leaflet-control-attribution {
+    background: var(--bg-card);
+    backdrop-filter: blur(10px);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    font-size: var(--font-size-xs);
+    color: var(--text-secondary);
+    padding: var(--spacing-xs) var(--spacing-sm);
+    box-shadow: var(--shadow-md);
+}
+
+.leaflet-control-attribution a {
+    color: var(--primary-color);
+    text-decoration: none;
+    font-weight: var(--font-weight-medium);
+}
+
+.leaflet-control-attribution a:hover {
+    color: var(--primary-hover);
+    text-decoration: underline;
+}
+
+/* Responsive mejorado */
+@media (max-width: 768px) {
+    .map-controls {
+        top: var(--spacing-md);
+        right: var(--spacing-md);
+    }
+
+    .map-controls button {
+        padding: var(--spacing-sm) var(--spacing-md);
+        font-size: var(--font-size-xs);
+        min-height: 36px;
+    }
+
+    .sound-popup {
+        min-width: 240px;
+        max-width: 300px;
+    }
+
+    .sound-popup h3 {
+        font-size: var(--font-size-base);
+    }
+
+    .audio-player-container {
+        padding: var(--spacing-md);
+    }
+
+    .sound-actions {
+        flex-direction: column;
+    }
+
+    .sound-actions button {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .leaflet-control-zoom a {
+        width: 36px;
+        height: 36px;
+    }
+}
+
+/* Estados de focus mejorados */
+.map-controls button:focus,
+.sound-actions button:focus {
+    outline: none;
+    box-shadow: var(--shadow-glow);
+}
+
+/* Efectos de parallax sutil */
+.sound-map-container::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(45deg,
+            rgba(37, 99, 235, 0.02) 0%,
+            transparent 50%,
+            rgba(99, 102, 241, 0.02) 100%);
+    pointer-events: none;
+    z-index: 1;
+    border-radius: var(--border-radius-lg);
 }
