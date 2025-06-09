@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import {
   MapContainer,
   TileLayer,
@@ -25,7 +25,7 @@ L.Icon.Default.mergeOptions({
 function MapEventHandler({ onLocationSelect, showLocationSelector }) {
   const [marker, setMarker] = useState(null);
 
-  const map = useMapEvents({
+  useMapEvents({
     click(e) {
       if (showLocationSelector && onLocationSelect) {
         const { lat, lng } = e.latlng;
@@ -53,16 +53,18 @@ function MapEventHandler({ onLocationSelect, showLocationSelector }) {
 // Crear icono mejorado y más llamativo
 const createSoundIcon = (emotion, soundName) => {
   const color = EMOTION_COLORS[emotion] || "#4f46e5";
-  
+
   // Crear un color más claro para el gradiente
   const lightColor = adjustColorBrightness(color, 40);
-  
+
   // Asegurar que tenemos valores válidos
-  const safeSoundName = (soundName || 'Sonido').replace(/"/g, '&quot;');
-  const safeEmotion = (emotion || 'neutral').replace(/"/g, '&quot;');
-  
-  console.log(`🎨 Creando ícono para: "${safeSoundName}" con emoción "${safeEmotion}"`);
-  
+  const safeSoundName = (soundName || "Sonido").replace(/"/g, "&quot;");
+  const safeEmotion = (emotion || "neutral").replace(/"/g, "&quot;");
+
+  console.log(
+    `🎨 Creando ícono para: "${safeSoundName}" con emoción "${safeEmotion}"`
+  );
+
   return L.divIcon({
     className: "custom-sound-marker",
     html: `
@@ -128,11 +130,106 @@ const SoundMap = ({
   zoom = APP_CONFIG.DEFAULT_ZOOM,
   height = "500px",
 }) => {
-  const [selectedSound, setSelectedSound] = useState(null);
   const [mapSounds, setMapSounds] = useState([]);
   const [mapCenter, setMapCenter] = useState(center);
   const [mapZoom, setMapZoom] = useState(zoom);
   const mapRef = useRef();
+
+  const showQuickTooltip = useCallback((element) => {
+    // Verificar que el elemento existe y tiene los datos necesarios
+    if (!element || !element.getAttribute) {
+      console.warn("🚨 Elemento inválido para tooltip");
+      return;
+    }
+
+    const soundName = element.getAttribute("data-sound-name");
+    const emotion = element.getAttribute("data-emotion");
+
+    console.log(`📋 Mostrando tooltip: ${soundName} (${emotion})`);
+
+    // Remover tooltip existente ANTES de crear uno nuevo
+    hideQuickTooltip();
+
+    // Verificar que tenemos datos para mostrar
+    if (!soundName) {
+      console.warn("🚨 No hay nombre de sonido para el tooltip");
+      return;
+    }
+
+    // Crear nuevo tooltip
+    const tooltip = document.createElement("div");
+    tooltip.className = "quick-sound-tooltip";
+    tooltip.setAttribute("data-tooltip-active", "true");
+    tooltip.innerHTML = `
+      <div class="tooltip-content">
+        <strong>${soundName}</strong>
+        ${emotion ? `<br><span class="emotion-label">${emotion}</span>` : ""}
+      </div>
+    `;
+
+    // Agregar al DOM primero
+    document.body.appendChild(tooltip);
+
+    // Esperar un frame para asegurar que el elemento esté renderizado
+    requestAnimationFrame(() => {
+      try {
+        // Obtener posición del elemento
+        const rect = element.getBoundingClientRect();
+        const tooltipRect = tooltip.getBoundingClientRect();
+
+        // Calcular posición centrada
+        const left = rect.left + rect.width / 2 - tooltipRect.width / 2;
+        const top = rect.top - tooltipRect.height - 12; // Un poco más de separación
+
+        // Asegurar que no se salga de la pantalla
+        const finalLeft = Math.max(
+          10,
+          Math.min(left, window.innerWidth - tooltipRect.width - 10)
+        );
+        const finalTop = Math.max(10, top);
+
+        tooltip.style.left = finalLeft + "px";
+        tooltip.style.top = finalTop + "px";
+
+        console.log(`✅ Tooltip posicionado en [${finalLeft}, ${finalTop}]`);
+      } catch (error) {
+        console.error("🚨 Error posicionando tooltip:", error);
+        // Si hay error, remover el tooltip
+        tooltip.remove();
+      }
+    });
+  }, []);
+
+  const hideQuickTooltip = useCallback(() => {
+    const existingTooltips = document.querySelectorAll(
+      '.quick-sound-tooltip[data-tooltip-active="true"]'
+    );
+
+    if (existingTooltips.length > 0) {
+      console.log(`🗑️ Removiendo ${existingTooltips.length} tooltips`);
+      existingTooltips.forEach((tooltip) => {
+        // Animación de salida
+        tooltip.classList.add("hiding");
+        setTimeout(() => {
+          if (tooltip.parentNode) {
+            tooltip.remove();
+          }
+        }, 150); // Duración de la animación de salida
+      });
+    }
+  }, []);
+
+  // Función para limpiar tooltips cuando se haga click en el mapa
+  const handleMapClick = useCallback(
+    (e) => {
+      // Solo ocultar si no se hizo click en un marcador
+      if (!e.target.closest(".sound-marker-icon")) {
+        console.log("🗺️ Click en mapa - ocultando tooltips");
+        hideQuickTooltip();
+      }
+    },
+    [hideQuickTooltip]
+  );
 
   useEffect(() => {
     console.log("🗺️ SoundMap recibió sonidos:", sounds?.length || 0);
@@ -201,21 +298,29 @@ const SoundMap = ({
   useEffect(() => {
     const initializeTooltips = () => {
       // Limpiar event listeners existentes para evitar duplicados
-      const existingMarkers = document.querySelectorAll('.sound-marker-icon');
-      existingMarkers.forEach(marker => {
+      const existingMarkers = document.querySelectorAll(".sound-marker-icon");
+      existingMarkers.forEach((marker) => {
         // Remover listeners existentes si los hay
         if (marker._tooltipHandlers) {
-          marker.removeEventListener('mouseenter', marker._tooltipHandlers.mouseenter);
-          marker.removeEventListener('mouseleave', marker._tooltipHandlers.mouseleave);
-          marker.removeEventListener('click', marker._tooltipHandlers.click);
+          marker.removeEventListener(
+            "mouseenter",
+            marker._tooltipHandlers.mouseenter
+          );
+          marker.removeEventListener(
+            "mouseleave",
+            marker._tooltipHandlers.mouseleave
+          );
+          marker.removeEventListener("click", marker._tooltipHandlers.click);
           delete marker._tooltipHandlers;
         }
       });
 
       // Agregar event listeners a los nuevos marcadores
-      const markers = document.querySelectorAll('.sound-marker-icon');
-      console.log(`🎯 Inicializando tooltips para ${markers.length} marcadores`);
-      
+      const markers = document.querySelectorAll(".sound-marker-icon");
+      console.log(
+        `🎯 Inicializando tooltips para ${markers.length} marcadores`
+      );
+
       markers.forEach((marker, index) => {
         // Función específica para mouseenter
         const handleMouseEnter = (e) => {
@@ -236,22 +341,28 @@ const SoundMap = ({
         };
 
         // Agregar listeners
-        marker.addEventListener('mouseenter', handleMouseEnter, { passive: true });
-        marker.addEventListener('mouseleave', handleMouseLeave, { passive: true });
-        marker.addEventListener('click', handleClick, { passive: true });
-        
+        marker.addEventListener("mouseenter", handleMouseEnter, {
+          passive: true,
+        });
+        marker.addEventListener("mouseleave", handleMouseLeave, {
+          passive: true,
+        });
+        marker.addEventListener("click", handleClick, { passive: true });
+
         // Guardar referencias para poder limpiarlas después
         marker._tooltipHandlers = {
           mouseenter: handleMouseEnter,
           mouseleave: handleMouseLeave,
-          click: handleClick
+          click: handleClick,
         };
       });
 
       // Event listener para click en el mapa
-      const mapContainer = document.querySelector('.sound-map-container');
+      const mapContainer = document.querySelector(".sound-map-container");
       if (mapContainer && !mapContainer._hasTooltipHandler) {
-        mapContainer.addEventListener('click', handleMapClick, { passive: true });
+        mapContainer.addEventListener("click", handleMapClick, {
+          passive: true,
+        });
         mapContainer._hasTooltipHandler = true;
       }
     };
@@ -259,42 +370,50 @@ const SoundMap = ({
     // Delay más corto y reintentos para asegurar que los marcadores estén listos
     const timer = setTimeout(() => {
       initializeTooltips();
-      
+
       // Segundo intento por si acaso
       setTimeout(initializeTooltips, 200);
     }, 50);
-    
+
     return () => {
       clearTimeout(timer);
       // Limpiar todos los event listeners
-      const markers = document.querySelectorAll('.sound-marker-icon');
-      markers.forEach(marker => {
+      const markers = document.querySelectorAll(".sound-marker-icon");
+      markers.forEach((marker) => {
         if (marker._tooltipHandlers) {
-          marker.removeEventListener('mouseenter', marker._tooltipHandlers.mouseenter);
-          marker.removeEventListener('mouseleave', marker._tooltipHandlers.mouseleave);
-          marker.removeEventListener('click', marker._tooltipHandlers.click);
+          marker.removeEventListener(
+            "mouseenter",
+            marker._tooltipHandlers.mouseenter
+          );
+          marker.removeEventListener(
+            "mouseleave",
+            marker._tooltipHandlers.mouseleave
+          );
+          marker.removeEventListener("click", marker._tooltipHandlers.click);
           delete marker._tooltipHandlers;
         }
       });
     };
-  }, [mapSounds]);
+  }, [mapSounds, showQuickTooltip, hideQuickTooltip, handleMapClick]);
 
   // useEffect adicional para re-inicializar tooltips después de cambios en el DOM
   useEffect(() => {
     const reinitializeTooltips = () => {
       // Verificar si hay marcadores sin event listeners
-      const markers = document.querySelectorAll('.sound-marker-icon');
+      const markers = document.querySelectorAll(".sound-marker-icon");
       let markersWithoutListeners = 0;
-      
-      markers.forEach(marker => {
+
+      markers.forEach((marker) => {
         if (!marker._tooltipHandlers) {
           markersWithoutListeners++;
         }
       });
-      
+
       if (markersWithoutListeners > 0) {
-        console.log(`🔄 Re-inicializando tooltips para ${markersWithoutListeners} marcadores`);
-        
+        console.log(
+          `🔄 Re-inicializando tooltips para ${markersWithoutListeners} marcadores`
+        );
+
         markers.forEach((marker, index) => {
           if (!marker._tooltipHandlers) {
             const handleMouseEnter = (e) => {
@@ -303,7 +422,9 @@ const SoundMap = ({
             };
 
             const handleMouseLeave = () => {
-              console.log(`🐭 Salió del marcador ${index + 1} (reinicializado)`);
+              console.log(
+                `🐭 Salió del marcador ${index + 1} (reinicializado)`
+              );
               hideQuickTooltip();
             };
 
@@ -312,14 +433,18 @@ const SoundMap = ({
               hideQuickTooltip();
             };
 
-            marker.addEventListener('mouseenter', handleMouseEnter, { passive: true });
-            marker.addEventListener('mouseleave', handleMouseLeave, { passive: true });
-            marker.addEventListener('click', handleClick, { passive: true });
-            
+            marker.addEventListener("mouseenter", handleMouseEnter, {
+              passive: true,
+            });
+            marker.addEventListener("mouseleave", handleMouseLeave, {
+              passive: true,
+            });
+            marker.addEventListener("click", handleClick, { passive: true });
+
             marker._tooltipHandlers = {
               mouseenter: handleMouseEnter,
               mouseleave: handleMouseLeave,
-              click: handleClick
+              click: handleClick,
             };
           }
         });
@@ -327,7 +452,7 @@ const SoundMap = ({
     };
 
     // Observador para detectar cambios en el DOM del mapa
-    const mapContainer = document.querySelector('.leaflet-map-pane');
+    const mapContainer = document.querySelector(".leaflet-map-pane");
     if (mapContainer) {
       const observer = new MutationObserver(() => {
         // Delay para permitir que Leaflet termine de renderizar
@@ -336,47 +461,57 @@ const SoundMap = ({
 
       observer.observe(mapContainer, {
         childList: true,
-        subtree: true
+        subtree: true,
       });
 
       return () => observer.disconnect();
     }
-  }, [mapSounds]);
+  }, [mapSounds, showQuickTooltip, hideQuickTooltip]);
 
   // Función global para forzar reinicialización (debugging)
-  const forceReinitializeTooltips = () => {
-    console.log('🔧 Forzando reinicialización de tooltips...');
-    const markers = document.querySelectorAll('.sound-marker-icon');
+  const forceReinitializeTooltips = useCallback(() => {
+    console.log("🔧 Forzando reinicialización de tooltips...");
+    const markers = document.querySelectorAll(".sound-marker-icon");
     console.log(`🎯 Encontrados ${markers.length} marcadores`);
-    
+
     markers.forEach((marker, index) => {
-      const soundName = marker.getAttribute('data-sound-name');
-      const emotion = marker.getAttribute('data-emotion');
+      const soundName = marker.getAttribute("data-sound-name");
+      const emotion = marker.getAttribute("data-emotion");
       console.log(`📋 Marcador ${index + 1}: ${soundName} (${emotion})`);
-      
+
       // Remover listeners existentes
       if (marker._tooltipHandlers) {
-        marker.removeEventListener('mouseenter', marker._tooltipHandlers.mouseenter);
-        marker.removeEventListener('mouseleave', marker._tooltipHandlers.mouseleave);
-        marker.removeEventListener('click', marker._tooltipHandlers.click);
+        marker.removeEventListener(
+          "mouseenter",
+          marker._tooltipHandlers.mouseenter
+        );
+        marker.removeEventListener(
+          "mouseleave",
+          marker._tooltipHandlers.mouseleave
+        );
+        marker.removeEventListener("click", marker._tooltipHandlers.click);
       }
-      
+
       // Agregar nuevos listeners
       const handleMouseEnter = (e) => showQuickTooltip(e.target);
       const handleMouseLeave = () => hideQuickTooltip();
       const handleClick = () => hideQuickTooltip();
 
-      marker.addEventListener('mouseenter', handleMouseEnter, { passive: true });
-      marker.addEventListener('mouseleave', handleMouseLeave, { passive: true });
-      marker.addEventListener('click', handleClick, { passive: true });
-      
+      marker.addEventListener("mouseenter", handleMouseEnter, {
+        passive: true,
+      });
+      marker.addEventListener("mouseleave", handleMouseLeave, {
+        passive: true,
+      });
+      marker.addEventListener("click", handleClick, { passive: true });
+
       marker._tooltipHandlers = {
         mouseenter: handleMouseEnter,
         mouseleave: handleMouseLeave,
-        click: handleClick
+        click: handleClick,
       };
     });
-  };
+  }, [showQuickTooltip, hideQuickTooltip]);
 
   // Hacer la función disponible globalmente para debugging
   useEffect(() => {
@@ -384,99 +519,10 @@ const SoundMap = ({
     return () => {
       delete window.reinitializeTooltips;
     };
-  }, []);
-
-  const showQuickTooltip = (element) => {
-    // Verificar que el elemento existe y tiene los datos necesarios
-    if (!element || !element.getAttribute) {
-      console.warn('🚨 Elemento inválido para tooltip');
-      return;
-    }
-
-    const soundName = element.getAttribute('data-sound-name');
-    const emotion = element.getAttribute('data-emotion');
-    
-    console.log(`📋 Mostrando tooltip: ${soundName} (${emotion})`);
-    
-    // Remover tooltip existente ANTES de crear uno nuevo
-    hideQuickTooltip();
-    
-    // Verificar que tenemos datos para mostrar
-    if (!soundName) {
-      console.warn('🚨 No hay nombre de sonido para el tooltip');
-      return;
-    }
-    
-    // Crear nuevo tooltip
-    const tooltip = document.createElement('div');
-    tooltip.className = 'quick-sound-tooltip';
-    tooltip.setAttribute('data-tooltip-active', 'true');
-    tooltip.innerHTML = `
-      <div class="tooltip-content">
-        <strong>${soundName}</strong>
-        ${emotion ? `<br><span class="emotion-label">${emotion}</span>` : ''}
-      </div>
-    `;
-    
-    // Agregar al DOM primero
-    document.body.appendChild(tooltip);
-    
-    // Esperar un frame para asegurar que el elemento esté renderizado
-    requestAnimationFrame(() => {
-      try {
-        // Obtener posición del elemento
-        const rect = element.getBoundingClientRect();
-        const tooltipRect = tooltip.getBoundingClientRect();
-        
-        // Calcular posición centrada
-        const left = rect.left + rect.width / 2 - tooltipRect.width / 2;
-        const top = rect.top - tooltipRect.height - 12; // Un poco más de separación
-        
-        // Asegurar que no se salga de la pantalla
-        const finalLeft = Math.max(10, Math.min(left, window.innerWidth - tooltipRect.width - 10));
-        const finalTop = Math.max(10, top);
-        
-        tooltip.style.left = finalLeft + 'px';
-        tooltip.style.top = finalTop + 'px';
-        
-        console.log(`✅ Tooltip posicionado en [${finalLeft}, ${finalTop}]`);
-      } catch (error) {
-        console.error('🚨 Error posicionando tooltip:', error);
-        // Si hay error, remover el tooltip
-        tooltip.remove();
-      }
-    });
-  };
-
-  const hideQuickTooltip = () => {
-    const existingTooltips = document.querySelectorAll('.quick-sound-tooltip[data-tooltip-active="true"]');
-    
-    if (existingTooltips.length > 0) {
-      console.log(`🗑️ Removiendo ${existingTooltips.length} tooltips`);
-      existingTooltips.forEach(tooltip => {
-        // Animación de salida
-        tooltip.classList.add('hiding');
-        setTimeout(() => {
-          if (tooltip.parentNode) {
-            tooltip.remove();
-          }
-        }, 150); // Duración de la animación de salida
-      });
-    }
-  };
-
-  // Función para limpiar tooltips cuando se haga click en el mapa
-  const handleMapClick = (e) => {
-    // Solo ocultar si no se hizo click en un marcador
-    if (!e.target.closest('.sound-marker-icon')) {
-      console.log('🗺️ Click en mapa - ocultando tooltips');
-      hideQuickTooltip();
-    }
-  };
+  }, [forceReinitializeTooltips]);
 
   const handleMarkerClick = (sound) => {
     console.log("🗺️ Marcador clickeado:", sound.nombre);
-    setSelectedSound(sound);
     if (onSoundSelect) {
       onSoundSelect(sound);
     }
@@ -678,22 +724,32 @@ const SoundMap = ({
           zIndex: 1000,
         }}
         onClick={() => {
-          console.log('🔍 Estado actual del mapa:');
-          console.log('   - mapSounds:', mapSounds.length);
-          console.log('   - Marcadores DOM:', document.querySelectorAll('.sound-marker-icon').length);
-          console.log('   - Tooltips activos:', document.querySelectorAll('.quick-sound-tooltip').length);
-          
+          console.log("🔍 Estado actual del mapa:");
+          console.log("   - mapSounds:", mapSounds.length);
+          console.log(
+            "   - Marcadores DOM:",
+            document.querySelectorAll(".sound-marker-icon").length
+          );
+          console.log(
+            "   - Tooltips activos:",
+            document.querySelectorAll(".quick-sound-tooltip").length
+          );
+
           // Verificar marcadores
-          const markers = document.querySelectorAll('.sound-marker-icon');
+          const markers = document.querySelectorAll(".sound-marker-icon");
           markers.forEach((marker, i) => {
-            const name = marker.getAttribute('data-sound-name');
-            const emotion = marker.getAttribute('data-emotion');
+            const name = marker.getAttribute("data-sound-name");
+            const emotion = marker.getAttribute("data-emotion");
             const hasListeners = !!marker._tooltipHandlers;
-            console.log(`   - Marcador ${i + 1}: ${name} (${emotion}) - Listeners: ${hasListeners}`);
+            console.log(
+              `   - Marcador ${
+                i + 1
+              }: ${name} (${emotion}) - Listeners: ${hasListeners}`
+            );
           });
-          
+
           if (window.reinitializeTooltips) {
-            console.log('🔧 Ejecutando reinicialización manual...');
+            console.log("🔧 Ejecutando reinicialización manual...");
             window.reinitializeTooltips();
           }
         }}

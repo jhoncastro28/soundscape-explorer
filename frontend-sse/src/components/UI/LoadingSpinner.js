@@ -15,7 +15,9 @@ const LoadingSpinner = ({
 
   const LoadingContent = () => (
     <div className={`loading-spinner ${sizeClasses[size]}`}>
-      <div className={`spinner ${color}`}></div>
+      <div className="spinner-container">
+        <div className={`spinner-element ${color}`}></div>
+      </div>
       {message && <p className="loading-message">{message}</p>}
     </div>
   );

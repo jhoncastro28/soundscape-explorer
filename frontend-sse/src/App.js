@@ -89,7 +89,6 @@ const HomePage = ({ sounds, onSoundSelect }) => {
 
   return (
     <div className="home-page">
-
       <header className="hero-section">
         <div className="hero-content">
           <h1>Descubre los Paisajes Sonoros del Mundo</h1>
@@ -349,20 +348,24 @@ const UploadPage = ({ onSoundCreated }) => {
 // Página de análisis - COMPLETAMENTE REEMPLAZADA
 const AnalyticsPage = ({ sounds }) => {
   // Adaptar los datos al formato esperado por el componente Analytics
-  const adaptedSounds = sounds ? sounds.map(sound => ({
-    // Adaptar la estructura de datos de tu API al formato del componente
-    author: sound.autor,
-    emotions: sound.emociones || [],
-    location: sound.ubicacion?.coordinates ? 
-      `${sound.ubicacion.coordinates[1].toFixed(2)}, ${sound.ubicacion.coordinates[0].toFixed(2)}` : 
-      'Ubicación desconocida',
-    duration: sound.duracion || 30, // valor por defecto si no hay duración
-    createdAt: sound.fecha,
-    // Mantener datos originales por si acaso
-    _id: sound._id,
-    nombre: sound.nombre,
-    descripcion: sound.descripcion
-  })) : [];
+  const adaptedSounds = sounds
+    ? sounds.map((sound) => ({
+        // Adaptar la estructura de datos de tu API al formato del componente
+        author: sound.autor,
+        emotions: sound.emociones || [],
+        location: sound.ubicacion?.coordinates
+          ? `${sound.ubicacion.coordinates[1].toFixed(
+              2
+            )}, ${sound.ubicacion.coordinates[0].toFixed(2)}`
+          : "Ubicación desconocida",
+        duration: sound.duracion || 30, // valor por defecto si no hay duración
+        createdAt: sound.fecha,
+        // Mantener datos originales por si acaso
+        _id: sound._id,
+        nombre: sound.nombre,
+        descripcion: sound.descripcion,
+      }))
+    : [];
 
   return <Analytics sounds={adaptedSounds} />;
 };
@@ -565,7 +568,7 @@ function App() {
   // Agregar debugMainState al objeto window para acceso global
   useEffect(() => {
     window.debugSoundScape = debugMainState;
-  }, [isLoading, error, sounds, connectionStatus]);
+  }, [debugMainState]);
 
   // Mostrar pantalla de carga
   if (isLoading) {
@@ -668,25 +671,5 @@ function App() {
     </Router>
   );
 }
-
-// Función helper para obtener color de emoción
-const getEmotionColor = (emotion) => {
-  const colors = {
-    relajante: "#10b981",
-    energético: "#f59e0b",
-    nostálgico: "#8b5cf6",
-    misterioso: "#6b7280",
-    alegre: "#fbbf24",
-    melancólico: "#6366f1",
-    caótico: "#ef4444",
-    peaceful: "#34d399",
-    inspirador: "#06b6d4",
-    romántico: "#ec4899",
-    aventurero: "#f97316",
-    meditativo: "#84cc16",
-  };
-
-  return colors[emotion] || "#6b7280";
-};
 
 export default App;

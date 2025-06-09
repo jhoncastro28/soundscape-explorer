@@ -5,18 +5,29 @@
     justify-content: center;
     gap: var(--spacing-xl);
     padding: var(--spacing-2xl);
+    /* Asegurar que el contenedor principal NUNCA rote */
+    animation: none !important;
+    transform: none !important;
 }
 
-.spinner {
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-    position: relative;
+.spinner-container {
     display: flex;
     align-items: center;
     justify-content: center;
+    position: relative;
+    /* Contenedor que NO rota */
+    animation: none !important;
+    transform: none !important;
 }
 
-.spinner::before {
+.spinner-element {
+    border-radius: 50%;
+    position: relative;
+    display: block;
+    /* Solo este elemento específico puede rotar */
+}
+
+.spinner-element::before {
     content: '';
     position: absolute;
     top: -2px;
@@ -26,16 +37,17 @@
     border-radius: 50%;
     background: linear-gradient(45deg, transparent, rgba(37, 99, 235, 0.1));
     z-index: -1;
-    animation: spinReverse 2s linear infinite;
+    animation: spinnerReverse 2s linear infinite;
 }
 
-.spinner.primary {
+.spinner-element.primary {
     border: 4px solid var(--bg-tertiary);
     border-top: 4px solid var(--primary-color);
     box-shadow: 0 0 20px rgba(37, 99, 235, 0.3);
+    animation: spinnerMain 1s linear infinite;
 }
 
-.spinner.primary::after {
+.spinner-element.primary::after {
     content: '';
     position: absolute;
     top: 2px;
@@ -45,60 +57,64 @@
     border-radius: 50%;
     border: 2px solid transparent;
     border-top: 2px solid var(--primary-light);
-    animation: spin 0.5s linear infinite reverse;
+    animation: spinnerInner 0.5s linear infinite reverse;
 }
 
-.spinner.secondary {
+.spinner-element.secondary {
     border: 4px solid var(--bg-tertiary);
     border-top: 4px solid var(--secondary-color);
     box-shadow: 0 0 20px rgba(100, 116, 139, 0.3);
+    animation: spinnerMain 1s linear infinite;
 }
 
-.spinner.success {
+.spinner-element.success {
     border: 4px solid var(--bg-tertiary);
     border-top: 4px solid var(--success-color);
     box-shadow: 0 0 20px rgba(5, 150, 105, 0.3);
+    animation: spinnerMain 1s linear infinite;
 }
 
-.spinner.warning {
+.spinner-element.warning {
     border: 4px solid var(--bg-tertiary);
     border-top: 4px solid var(--warning-color);
     box-shadow: 0 0 20px rgba(217, 119, 6, 0.3);
+    animation: spinnerMain 1s linear infinite;
 }
 
-.spinner.error {
+.spinner-element.error {
     border: 4px solid var(--bg-tertiary);
     border-top: 4px solid var(--error-color);
     box-shadow: 0 0 20px rgba(220, 38, 38, 0.3);
+    animation: spinnerMain 1s linear infinite;
 }
 
-.spinner-small .spinner {
+.spinner-small .spinner-element {
     width: 24px;
     height: 24px;
     border-width: 3px;
 }
 
-.spinner-small .spinner::after {
+.spinner-small .spinner-element::after {
     border-width: 2px;
 }
 
-.spinner-medium .spinner {
+.spinner-medium .spinner-element {
     width: 48px;
     height: 48px;
     border-width: 4px;
 }
 
-.spinner-medium .spinner::after {
+.spinner-medium .spinner-element::after {
     border-width: 2px;
 }
 
-.spinner-large .spinner {
+.spinner-large .spinner-element {
     width: 72px;
     height: 72px;
     border-width: 6px;
 }
 
-.spinner-large .spinner::after {
+.spinner-large .spinner-element::after {
     border-width: 3px;
 }
 
@@ -110,6 +126,10 @@
     font-weight: var(--font-weight-medium);
     line-height: var(--line-height-normal);
     max-width: 300px;
+    /* CRÍTICO: Asegurar que el texto NUNCA rote */
+    animation: none !important;
+    transform: none !important;
+    position: relative;
 }
 
 .loading-message.primary {
@@ -144,7 +164,7 @@
     align-items: center;
     justify-content: center;
     z-index: var(--z-modal);
-    animation: fadeIn 0.3s ease-out;
+    animation: overlayFadeIn 0.3s ease-out;
 }
 
 .loading-overlay .loading-spinner {
@@ -291,7 +311,7 @@
     border-radius: var(--border-radius);
     position: relative;
     overflow: hidden;
-    animation: loadingPulse 2s ease-in-out infinite;
+    animation: loadingSkeletonPulse 2s ease-in-out infinite;
 }
 
 .loading-skeleton::after {
@@ -331,7 +351,8 @@
     width: 100%;
 }
 
-@keyframes spin {
+/* Keyframes específicos para spinner */
+@keyframes spinnerMain {
     from {
         transform: rotate(0deg);
     }
@@ -341,7 +362,7 @@
     }
 }
 
-@keyframes spinReverse {
+@keyframes spinnerReverse {
     from {
         transform: rotate(360deg);
     }
@@ -351,7 +372,17 @@
     }
 }
 
-@keyframes fadeIn {
+@keyframes spinnerInner {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes overlayFadeIn {
     from {
         opacity: 0;
         transform: scale(0.9);
@@ -441,6 +472,18 @@
     }
 }
 
+@keyframes loadingSkeletonPulse {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.8;
+    }
+}
+
 .loading-spinner.compact {
     gap: var(--spacing-md);
     padding: var(--spacing-lg);
@@ -456,7 +499,7 @@
     padding: 0;
 }
 
-.loading-spinner.inline .spinner {
+.loading-spinner.inline .spinner-element {
     width: 20px;
     height: 20px;
     border-width: 2px;
@@ -473,7 +516,7 @@
         max-width: calc(100vw - 2rem);
     }
 
-    .spinner-large .spinner {
+    .spinner-large .spinner-element {
         width: 56px;
         height: 56px;
         border-width: 4px;
@@ -493,7 +536,7 @@
         padding: var(--spacing-xl);
     }
 
-    .spinner-medium .spinner {
+    .spinner-medium .spinner-element {
         width: 36px;
         height: 36px;
         border-width: 3px;
@@ -512,9 +555,9 @@
 
 @media (prefers-reduced-motion: reduce) {
 
-    .spinner,
-    .spinner::before,
-    .spinner::after,
+    .spinner-element,
+    .spinner-element::before,
+    .spinner-element::after,
     .loading-dot,
     .loading-pulse,
     .loading-pulse::before,
@@ -531,7 +574,7 @@
         animation: none;
     }
 
-    .spinner {
+    .spinner-element {
         border-top-color: var(--primary-color);
         transform: rotate(45deg);
     }
@@ -542,5 +585,11 @@
 
     .loading-dot:nth-child(3) {
         background: var(--primary-dark);
+    }
+
+    /* Asegurar que el texto permanezca estático incluso con reduced motion */
+    .loading-message {
+        animation: none !important;
+        transform: none !important;
     }
 }

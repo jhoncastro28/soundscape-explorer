@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import StatsPanel from './StatsPanel';
-import EmotionChart from './EmotionChart';
-import './StatsPanel.css';
-import './AnalyticsExtras.css';
+import React, { useState, useEffect, useCallback } from "react";
+import StatsPanel from "./StatsPanel";
+import EmotionChart from "./EmotionChart";
+import "./StatsPanel.css";
+import "./AnalyticsExtras.css";
 
 const Analytics = ({ sounds = [] }) => {
   const [stats, setStats] = useState({});
@@ -12,31 +12,25 @@ const Analytics = ({ sounds = [] }) => {
   const [insights, setInsights] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (sounds.length > 0) {
-      calculateAnalytics();
-    }
-    setLoading(false);
-  }, [sounds]);
-
-  const calculateAnalytics = () => {
+  const calculateAnalytics = useCallback(() => {
     // Calcular estadísticas principales
     const totalSounds = sounds.length;
-    const uniqueAuthors = new Set(sounds.map(s => s.author)).size;
-    const uniqueEmotions = new Set(sounds.flatMap(s => s.emotions || [])).size;
+    const uniqueAuthors = new Set(sounds.map((s) => s.author)).size;
+    const uniqueEmotions = new Set(sounds.flatMap((s) => s.emotions || []))
+      .size;
     const totalDuration = sounds.reduce((acc, s) => acc + (s.duration || 0), 0);
 
     setStats({
       totalSounds,
       uniqueAuthors,
       uniqueEmotions,
-      totalDuration
+      totalDuration,
     });
 
     // Calcular datos de emociones
     const emotionCounts = {};
-    sounds.forEach(sound => {
-      (sound.emotions || []).forEach(emotion => {
+    sounds.forEach((sound) => {
+      (sound.emotions || []).forEach((emotion) => {
         emotionCounts[emotion] = (emotionCounts[emotion] || 0) + 1;
       });
     });
@@ -50,9 +44,10 @@ const Analytics = ({ sounds = [] }) => {
 
     // Calcular datos de ubicaciones
     const locationCounts = {};
-    sounds.forEach(sound => {
+    sounds.forEach((sound) => {
       if (sound.location) {
-        locationCounts[sound.location] = (locationCounts[sound.location] || 0) + 1;
+        locationCounts[sound.location] =
+          (locationCounts[sound.location] || 0) + 1;
       }
     });
 
@@ -68,10 +63,10 @@ const Analytics = ({ sounds = [] }) => {
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
     const dailyCounts = {};
-    sounds.forEach(sound => {
+    sounds.forEach((sound) => {
       const date = new Date(sound.createdAt || Date.now());
       if (date >= thirtyDaysAgo) {
-        const dateKey = date.toISOString().split('T')[0];
+        const dateKey = date.toISOString().split("T")[0];
         dailyCounts[dateKey] = (dailyCounts[dateKey] || 0) + 1;
       }
     });
@@ -80,10 +75,10 @@ const Analytics = ({ sounds = [] }) => {
     for (let i = 29; i >= 0; i--) {
       const date = new Date();
       date.setDate(date.getDate() - i);
-      const dateKey = date.toISOString().split('T')[0];
+      const dateKey = date.toISOString().split("T")[0];
       timelineArray.push({
         date: dateKey,
-        count: dailyCounts[dateKey] || 0
+        count: dailyCounts[dateKey] || 0,
       });
     }
 
@@ -91,57 +86,71 @@ const Analytics = ({ sounds = [] }) => {
 
     // Generar insights
     generateInsights(sortedEmotions, totalSounds, uniqueAuthors);
-  };
+  }, [sounds]);
 
-  const generateInsights = (emotions, total, authors) => {
-    const insightsList = [];
+  const generateInsights = useCallback(
+    (emotions, total, authors) => {
+      const insightsList = [];
 
-    if (emotions.length > 0) {
-      const topEmotion = emotions[0];
-      insightsList.push({
-        title: "Emoción Dominante",
-        description: `**${topEmotion.emotion}** es la emoción más común con ${topEmotion.count} apariciones (${((topEmotion.count / total) * 100).toFixed(1)}% del total).`
-      });
+      if (emotions.length > 0) {
+        const topEmotion = emotions[0];
+        insightsList.push({
+          title: "Emoción Dominante",
+          description: `**${topEmotion.emotion}** es la emoción más común con ${
+            topEmotion.count
+          } apariciones (${((topEmotion.count / total) * 100).toFixed(
+            1
+          )}% del total).`,
+        });
+      }
+
+      if (authors > 1) {
+        const soundsPerAuthor = (total / authors).toFixed(1);
+        insightsList.push({
+          title: "Participación Colaborativa",
+          description: `Con **${authors} contribuyentes**, hay un promedio de **${soundsPerAuthor} sonidos por persona**, mostrando una buena distribución colaborativa.`,
+        });
+      }
+
+      if (emotions.length >= 3) {
+        const diversityScore = ((emotions.length / total) * 100).toFixed(1);
+        insightsList.push({
+          title: "Diversidad Emocional",
+          description: `El **${diversityScore}%** de diversidad emocional indica una rica variedad de expresiones en la colección.`,
+        });
+      }
+
+      const recentSounds = sounds.filter((s) => {
+        const soundDate = new Date(s.createdAt || Date.now());
+        const weekAgo = new Date();
+        weekAgo.setDate(weekAgo.getDate() - 7);
+        return soundDate >= weekAgo;
+      }).length;
+
+      if (recentSounds > 0) {
+        insightsList.push({
+          title: "Actividad Reciente",
+          description: `**${recentSounds} sonidos** fueron agregados en los últimos 7 días, mostrando una comunidad activa.`,
+        });
+      }
+
+      setInsights(insightsList);
+    },
+    [sounds]
+  );
+
+  useEffect(() => {
+    if (sounds.length > 0) {
+      calculateAnalytics();
     }
-
-    if (authors > 1) {
-      const soundsPerAuthor = (total / authors).toFixed(1);
-      insightsList.push({
-        title: "Participación Colaborativa",
-        description: `Con **${authors} contribuyentes**, hay un promedio de **${soundsPerAuthor} sonidos por persona**, mostrando una buena distribución colaborativa.`
-      });
-    }
-
-    if (emotions.length >= 3) {
-      const diversityScore = ((emotions.length / total) * 100).toFixed(1);
-      insightsList.push({
-        title: "Diversidad Emocional",
-        description: `El **${diversityScore}%** de diversidad emocional indica una rica variedad de expresiones en la colección.`
-      });
-    }
-
-    const recentSounds = sounds.filter(s => {
-      const soundDate = new Date(s.createdAt || Date.now());
-      const weekAgo = new Date();
-      weekAgo.setDate(weekAgo.getDate() - 7);
-      return soundDate >= weekAgo;
-    }).length;
-
-    if (recentSounds > 0) {
-      insightsList.push({
-        title: "Actividad Reciente",
-        description: `**${recentSounds} sonidos** fueron agregados en los últimos 7 días, mostrando una comunidad activa.`
-      });
-    }
-
-    setInsights(insightsList);
-  };
+    setLoading(false);
+  }, [sounds, calculateAnalytics]);
 
   const formatDate = (dateString) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('es-ES', { 
-      day: '2-digit', 
-      month: '2-digit' 
+    return date.toLocaleDateString("es-ES", {
+      day: "2-digit",
+      month: "2-digit",
     });
   };
 
@@ -160,10 +169,15 @@ const Analytics = ({ sounds = [] }) => {
       <div className="analytics-page">
         <div className="analytics-header">
           <h1>Panel de Análisis</h1>
-          <p className="analytics-subtitle">Explora las tendencias y patrones de tu colección</p>
+          <p className="analytics-subtitle">
+            Explora las tendencias y patrones de tu colección
+          </p>
         </div>
         <div className="no-data">
-          <p>No hay datos suficientes para mostrar análisis. ¡Agrega algunos sonidos para comenzar!</p>
+          <p>
+            No hay datos suficientes para mostrar análisis. ¡Agrega algunos
+            sonidos para comenzar!
+          </p>
         </div>
       </div>
     );
@@ -175,7 +189,8 @@ const Analytics = ({ sounds = [] }) => {
       <div className="analytics-header">
         <h1>Panel de Análisis</h1>
         <p className="analytics-subtitle">
-          Explora las tendencias y patrones de tu colección de {stats.totalSounds} sonidos
+          Explora las tendencias y patrones de tu colección de{" "}
+          {stats.totalSounds} sonidos
         </p>
       </div>
 
@@ -186,10 +201,7 @@ const Analytics = ({ sounds = [] }) => {
       <div className="analytics-grid">
         {/* Gráfico de emociones */}
         <div className="analytics-card">
-          <EmotionChart 
-            data={emotionData} 
-            title="Distribución de Emociones" 
-          />
+          <EmotionChart data={emotionData} title="Distribución de Emociones" />
         </div>
 
         {/* Ubicaciones más frecuentes */}
@@ -219,15 +231,21 @@ const Analytics = ({ sounds = [] }) => {
           <div className="detailed-stats">
             <div className="stat-row">
               <strong>Duración Promedio</strong>
-              <span>{Math.round(stats.totalDuration / stats.totalSounds || 0)}s</span>
+              <span>
+                {Math.round(stats.totalDuration / stats.totalSounds || 0)}s
+              </span>
             </div>
             <div className="stat-row">
               <strong>Sonidos por Autor</strong>
-              <span>{(stats.totalSounds / stats.uniqueAuthors || 0).toFixed(1)}</span>
+              <span>
+                {(stats.totalSounds / stats.uniqueAuthors || 0).toFixed(1)}
+              </span>
             </div>
             <div className="stat-row">
               <strong>Emociones por Sonido</strong>
-              <span>{(stats.uniqueEmotions / stats.totalSounds || 0).toFixed(1)}</span>
+              <span>
+                {(stats.uniqueEmotions / stats.totalSounds || 0).toFixed(1)}
+              </span>
             </div>
             <div className="stat-row">
               <strong>Tiempo Total</strong>
@@ -245,13 +263,13 @@ const Analytics = ({ sounds = [] }) => {
           <div className="timeline-chart">
             <div className="timeline-bars">
               {timelineData.map(({ date, count }) => {
-                const maxCount = Math.max(...timelineData.map(d => d.count));
+                const maxCount = Math.max(...timelineData.map((d) => d.count));
                 const height = maxCount > 0 ? (count / maxCount) * 100 : 0;
-                
+
                 return (
                   <div key={date} className="timeline-bar">
-                    <div 
-                      className="bar" 
+                    <div
+                      className="bar"
                       style={{ height: `${Math.max(height, 8)}%` }}
                       title={`${count} sonidos - ${formatDate(date)}`}
                     />
