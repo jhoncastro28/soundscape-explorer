@@ -345,27 +345,81 @@ const UploadPage = ({ onSoundCreated }) => {
   );
 };
 
-// Página de análisis - COMPLETAMENTE REEMPLAZADA
+// Página de análisis
 const AnalyticsPage = ({ sounds }) => {
-  // Adaptar los datos al formato esperado por el componente Analytics
+  console.log("📊 AnalyticsPage recibió sounds:", sounds?.length || 0);
+
+  // Debug: mostrar estructura de los primeros sonidos
+  if (sounds && sounds.length > 0) {
+    console.log("🎵 Primer sonido en AnalyticsPage:", sounds[0]);
+    console.log("📅 Campos de fecha disponibles:", {
+      fecha: sounds[0]?.fecha,
+      _id: sounds[0]?._id,
+      autor: sounds[0]?.autor,
+    });
+  }
+
   const adaptedSounds = sounds
-    ? sounds.map((sound) => ({
-        // Adaptar la estructura de datos de tu API al formato del componente
-        author: sound.autor,
-        emotions: sound.emociones || [],
-        location: sound.ubicacion?.coordinates
-          ? `${sound.ubicacion.coordinates[1].toFixed(
-              2
-            )}, ${sound.ubicacion.coordinates[0].toFixed(2)}`
-          : "Ubicación desconocida",
-        duration: sound.duracion || 30, // valor por defecto si no hay duración
-        createdAt: sound.fecha,
-        // Mantener datos originales por si acaso
-        _id: sound._id,
-        nombre: sound.nombre,
-        descripcion: sound.descripcion,
-      }))
+    ? sounds.map((sound, index) => {
+        // Determinar fecha a usar
+        let dateToUse = null;
+        if (sound.fecha) {
+          dateToUse = sound.fecha;
+        } else {
+          console.warn(`⚠️ Sonido ${index} sin fecha, usando fecha actual`);
+          dateToUse = new Date().toISOString();
+        }
+
+        const adapted = {
+          // Datos básicos
+          author: sound.autor || "Autor desconocido",
+          emotions: Array.isArray(sound.emociones) ? sound.emociones : [],
+
+          // Ubicación formateada
+          location: sound.ubicacion?.coordinates
+            ? `${sound.ubicacion.coordinates[1].toFixed(
+                2
+              )}, ${sound.ubicacion.coordinates[0].toFixed(2)}`
+            : "Ubicación desconocida",
+
+          // Duración con fallback
+          duration: sound.duracion || 30,
+
+          // ✅ FECHA CRÍTICA
+          createdAt: dateToUse,
+          fecha: dateToUse, // Mantener ambos por compatibilidad
+
+          // Mantener datos originales por si acaso
+          _id: sound._id,
+          nombre: sound.nombre || "Sin nombre",
+          descripcion: sound.descripcion || "",
+
+          // Debug info
+          originalData:
+            process.env.NODE_ENV === "development" ? sound : undefined,
+        };
+
+        // Log de debug para los primeros sonidos
+        if (index < 3) {
+          console.log(`🔄 Sonido ${index} adaptado:`, {
+            original_fecha: sound.fecha,
+            adapted_createdAt: adapted.createdAt,
+            nombre: adapted.nombre,
+          });
+        }
+
+        return adapted;
+      })
     : [];
+
+  console.log("✅ Datos adaptados para Analytics:", {
+    total: adaptedSounds.length,
+    primerSonido: adaptedSounds[0],
+    fechas: adaptedSounds.slice(0, 3).map((s) => ({
+      nombre: s.nombre,
+      fecha: s.createdAt,
+    })),
+  });
 
   return <Analytics sounds={adaptedSounds} />;
 };
